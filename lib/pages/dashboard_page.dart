@@ -143,7 +143,7 @@ class _DashboardPageState extends State<DashboardPage> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
-          'AAL APROVAL',
+          'Prototype',
           style: TextStyle(
             fontFamily: 'mgopenmodata',
             fontWeight: FontWeight.bold,
