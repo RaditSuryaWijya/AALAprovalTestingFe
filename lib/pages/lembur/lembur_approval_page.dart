@@ -33,8 +33,7 @@
       try {
         _currentUser = await AuthService.getCurrentUser();
         final list = await LemburService.getAllLembur();
-  
-        // Filter berdasarkan role
+
         if (_currentUser != null) {
           if (_currentUser!.isSupervisor) {
             list.removeWhere((item) => item.status != 'PENDING_SPV');
@@ -123,10 +122,6 @@
         appBar: AppBar(
           title: const Text(
             'Approval Lembur',
-            style: TextStyle(
-              fontFamily: 'mgopenmodata',
-              fontWeight: FontWeight.bold,
-            ),
           ),
           backgroundColor: Colors.grey.shade300,
           foregroundColor: Colors.black,
@@ -171,7 +166,6 @@
     }
 
     Widget _buildLemburCard(LemburModel lembur) {
-      // Logic formatting tetap di sini
       final tanggalFormatted = DateHelper.formatDateTime(lembur.tanggal);
       final tanggalParts = tanggalFormatted.split(' ');
 
@@ -180,7 +174,6 @@
           : [lembur.keterangan];
 
       return ApprovalCard(
-        // 1. Tentukan aksi
         onApprove: () => _handleApprove(lembur, 'approve'),
         onReject: () => _handleApprove(lembur, 'reject'),
         onDetail: () {
@@ -189,18 +182,15 @@
             MaterialPageRoute(builder: (context) => LemburDetailPage(lemburId: lembur.id)),
           ).then((_) => _loadUserAndLembur());
         },
-        // 2. Susun konten tengah secara custom
         content: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Tanggal
             for (var part in tanggalParts)
               Text(
                 part,
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
               ),
             const SizedBox(height: 4),
-            // Keterangan
             for (var part in keteranganParts)
               Text(
                 part,

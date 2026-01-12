@@ -144,10 +144,6 @@ class _DashboardPageState extends State<DashboardPage> {
       appBar: AppBar(
         title: const Text(
           'Prototype',
-          style: TextStyle(
-            fontFamily: 'mgopenmodata',
-            fontWeight: FontWeight.bold,
-          ),
         ),
         backgroundColor: Colors.grey.shade300,
         foregroundColor: Colors.black,

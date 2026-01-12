@@ -93,11 +93,9 @@ class _LemburListPageState extends State<LemburListPage> {
   }
 
   Widget _buildLemburCard(LemburModel lembur) {
-    // Format tanggal
     final tanggalFormatted = DateHelper.formatDateTime(lembur.tanggal);
     final tanggalParts = tanggalFormatted.split(' ');
 
-    // Split keterangan jika panjang
     final keteranganParts = lembur.keterangan.length > 20
         ? [
             lembur.keterangan.substring(0, 20),
@@ -132,12 +130,11 @@ class _LemburListPageState extends State<LemburListPage> {
                 ),
               ),
               const SizedBox(width: 16),
-              // Informasi di tengah
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Tanggal (multiple lines)
+
                     for (var part in tanggalParts)
                       Text(
                         part,
@@ -147,7 +144,6 @@ class _LemburListPageState extends State<LemburListPage> {
                         ),
                       ),
                     const SizedBox(height: 4),
-                    // Keterangan (multiple lines)
                     for (var part in keteranganParts)
                       Text(
                         part,
@@ -159,11 +155,9 @@ class _LemburListPageState extends State<LemburListPage> {
                   ],
                 ),
               ),
-              // Tombol aksi di kanan
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Checkmark hijau
                   Container(
                     width: 36,
                     height: 36,
@@ -190,7 +184,6 @@ class _LemburListPageState extends State<LemburListPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // X merah
                   Container(
                     width: 36,
                     height: 36,
@@ -217,7 +210,6 @@ class _LemburListPageState extends State<LemburListPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // Info icon
                   Container(
                     width: 36,
                     height: 36,

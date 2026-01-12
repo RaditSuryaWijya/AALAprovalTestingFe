@@ -30,9 +30,7 @@ class _POApprovalPageState extends State<POApprovalPage> {
 
     try {
       final list = await POService.getAllPO();
-      // Filter hanya PENDING untuk Manager
       list.removeWhere((item) => item.status != 'PENDING');
-
       setState(() {
         _poList = list;
         _isLoading = false;
@@ -101,7 +99,6 @@ class _POApprovalPageState extends State<POApprovalPage> {
 
   String _formatPrice(String priceString) {
     try {
-      // Remove any non-numeric characters except decimal point
       final cleanPrice = priceString.replaceAll(RegExp(r'[^\d.]'), '');
       final price = double.parse(cleanPrice);
       return 'Rp ${price.toStringAsFixed(0).replaceAllMapped(
@@ -120,10 +117,6 @@ class _POApprovalPageState extends State<POApprovalPage> {
       appBar: AppBar(
         title: const Text(
           'Approval PO',
-          style: TextStyle(
-            fontFamily: 'mgopenmodata',
-            fontWeight: FontWeight.bold,
-          ),
         ),
         backgroundColor: Colors.grey.shade300,
         foregroundColor: Colors.black,
@@ -169,8 +162,6 @@ class _POApprovalPageState extends State<POApprovalPage> {
   }
 
   Widget _buildPOCard(POModel po) {
-    // Logic split dihapus
-
     return ApprovalCard(
       onApprove: () => _handleApprove(po, 'approve'),
       onReject: () => _handleApprove(po, 'reject'),
@@ -183,25 +174,18 @@ class _POApprovalPageState extends State<POApprovalPage> {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Langsung tampilkan nama barang secara utuh
           Text(
             po.namaBarang,
             style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500
             ),
-            // Opsional: Agar tidak terlalu panjang ke bawah, bisa dibatasi
+
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
           ),
 
           const SizedBox(height: 8),
-
-          // Harga
-          Text(
-              '',
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade700)
-          ),
           Text(
             _formatPrice(po.totalHarga),
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),

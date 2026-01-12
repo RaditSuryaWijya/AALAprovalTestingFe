@@ -1,16 +1,9 @@
 import 'package:flutter/material.dart';
 
 class ApprovalCard extends StatelessWidget {
-  /// Konten utama di bagian tengah (Teks nama, harga, tanggal, dll)
   final Widget content;
-
-  /// Fungsi ketika tombol Check (Hijau) ditekan
   final VoidCallback onApprove;
-
-  /// Fungsi ketika tombol Silang (Merah) ditekan
   final VoidCallback onReject;
-
-  /// Fungsi ketika tombol Info (Biru) ditekan
   final VoidCallback onDetail;
 
   const ApprovalCard({
@@ -26,25 +19,19 @@ class ApprovalCard extends StatelessWidget {
     return Container(
 
       child: Card(
-        color: Colors.grey.shade400,
+        color: Colors.grey.shade300,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(5),
         ),
         elevation: 0,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(5),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Spacer kiri (bisa diganti leading icon jika ada)
-              const SizedBox(width: 16),
-
-              // Bagian Tengah (Dinamis)
+              const SizedBox(width: 5),
               Expanded(child: content),
-
               const SizedBox(width: 16),
-
-              // Bagian Kanan (Tombol Aksi Tetap)
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
