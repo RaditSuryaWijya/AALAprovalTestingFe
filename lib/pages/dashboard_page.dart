@@ -6,7 +6,7 @@ import '../services/menu_service.dart';
 import '../utils/route_manager.dart';
 import '../routes/app_routes.dart';
 import '../components/menu_grid_item.dart';
-import '../components/user_profile_header.dart';
+import '../components/custom_toolbar.dart';
 import 'login_page.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -134,117 +134,99 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text(
-          'Prototype',
-          style: TextStyle(
-            fontFamily: 'mgopenmodata',
-            // fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.grey.shade300,
-        foregroundColor: Colors.black,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.black),
-            onPressed: _handleLogout,
-            tooltip: 'Logout',
-          ),
-        ],
-      ),
       body: Column(
         children: [
-          _buildHeader(),
-          const SizedBox(height: 8),
+          // Custom Toolbar - Fixed, tidak bisa di-scroll (AppBar + UserProfile)
+          CustomToolbar(
+            user: widget.user,
+            dateString: _formatDate(),
+          ),
+          // Menu Content - Bisa di-scroll
           Expanded(
             child: RefreshIndicator(
               onRefresh: _loadMenus,
-              child: _buildMenuContent(),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: _buildMenuContent(),
+              ),
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return UserProfileHeader(
-      user: widget.user,
-      dateString: _formatDate(),
     );
   }
 
   Widget _buildMenuContent() {
-      return ListView(
-        padding: EdgeInsets.zero,
-        children: [
-        if (_isLoadingMenus)
-          const Padding(
-            padding: EdgeInsets.all(32.0),
-            child: Center(child: CircularProgressIndicator()),
-          )
-        else if (_errorMessage != null)
-          Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Column(
-              children: [
-                Text(
-                  _errorMessage!,
-                  style: const TextStyle(color: Colors.red),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _loadMenus,
-                  child: const Text('Coba Lagi'),
-                ),
-              ],
+    if (_isLoadingMenus) {
+      return const Padding(
+        padding: EdgeInsets.all(32.0),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          children: [
+            Text(
+              _errorMessage!,
+              style: const TextStyle(color: Colors.red),
             ),
-          )
-        else if (_menus.isEmpty)
-          Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Column(
-              children: [
-                const Icon(
-                  Icons.menu,
-                  size: 64,
-                  color: Colors.grey,
-                ),
-                const SizedBox(height: 16),
-                const Text('Tidak ada menu tersedia'),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: _loadMenus,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Refresh'),
-                ),
-              ],
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadMenus,
+              child: const Text('Coba Lagi'),
             ),
-          )
-        else
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 3,
-                mainAxisSpacing: 3,
-                childAspectRatio: 0.85,
-              ),
-              itemCount: _menus.length,
-              itemBuilder: (context, index) {
-                final menu = _menus[index];
-                return MenuGridItem(
-                  menu: menu,
-                  onTap: () => _navigateToMenu(menu),
-                );
-              },
+          ],
+        ),
+      );
+    }
+
+    if (_menus.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.menu,
+              size: 64,
+              color: Colors.grey,
             ),
-          ),
-      ],
+            const SizedBox(height: 16),
+            const Text('Tidak ada menu tersedia'),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _loadMenus,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Refresh'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // --- PERUBAHAN DI SINI ---
+    // Widget Padding dihapus, langsung return GridView
+    return GridView.builder(
+      // Tambahkan padding: EdgeInsets.zero jika ingin benar-benar mepet ke sisi layar
+      padding: const EdgeInsets.only(top: 5, left: 5, right: 5),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 3,
+        mainAxisSpacing: 3,
+        childAspectRatio: 0.85,
+      ),
+      itemCount: _menus.length,
+      itemBuilder: (context, index) {
+        final menu = _menus[index];
+        return MenuGridItem(
+          menu: menu,
+          onTap: () => _navigateToMenu(menu),
+        );
+      },
     );
   }
 
