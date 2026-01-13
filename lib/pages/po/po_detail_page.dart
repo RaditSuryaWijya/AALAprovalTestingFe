@@ -65,10 +65,9 @@ class _PODetailPageState extends State<PODetailPage> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Detail PO'),
-        backgroundColor: Colors.grey.shade300,
+        backgroundColor: Colors.green,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -93,7 +92,6 @@ class _PODetailPageState extends State<PODetailPage> {
 
             // Info Card
             Card(
-              color: Colors.white,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(

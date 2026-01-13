@@ -143,7 +143,11 @@ class _DashboardPageState extends State<DashboardPage> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
-          'Prototype',
+          'AAL APROVAL',
+          style: TextStyle(
+            fontFamily: 'mgopenmodata',
+            fontWeight: FontWeight.bold,
+          ),
         ),
         backgroundColor: Colors.grey.shade300,
         foregroundColor: Colors.black,
@@ -331,41 +335,44 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildMenuCard(MenuModel menu) {
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(5),
+    return Container(
+      height: 135, 
+      margin: const EdgeInsets.all(1.25), 
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(5), 
+        color: Colors.grey.shade300,
       ),
-      color: Colors.grey.shade300,
-      child: InkWell(
-        onTap: () => _navigateToMenu(menu),
-        borderRadius: BorderRadius.circular(5),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _navigateToMenu(menu),
+          borderRadius: BorderRadius.circular(5),
           child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                menu.iconData,
-                size: 60,
-                color: Colors.blue,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                menu.label.toUpperCase(),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'mgopenmodata',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
+            padding: const EdgeInsets.all(5.0), 
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center, 
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  menu.iconData,
+                  size: 60,
+                  color: Colors.blue,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  menu.label.toUpperCase(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'mgopenmodata',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ),
       ),

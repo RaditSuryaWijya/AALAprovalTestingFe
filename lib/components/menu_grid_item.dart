@@ -13,35 +13,40 @@ class MenuGridItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-      color: Colors.grey.shade300,
-      child: InkWell(
-        onTap: onTap,
+    return Container(
+      height: 135,
+      margin: const EdgeInsets.all(1.25),
+      decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(5),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(menu.iconData, size: 60, color: Colors.blue),
-              const SizedBox(height: 4),
-              Text(
-                menu.label.toUpperCase(),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontFamily: 'mgopenmodata',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
+        color: Colors.grey.shade300,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(5),
+          child: Padding(
+            padding: const EdgeInsets.all(5.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(menu.iconData, size: 60, color: Colors.blue),
+                const SizedBox(height: 4),
+                Text(
+                  menu.label.toUpperCase(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'mgopenmodata',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

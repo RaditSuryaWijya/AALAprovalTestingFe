@@ -67,24 +67,18 @@ class _LemburDetailPageState extends State<LemburDetailPage> {
     }
 
     return Scaffold(
-      backgroundColor:Colors.white,
       appBar: AppBar(
         title: const Text('Detail Lembur'),
-        backgroundColor: Colors.grey.shade300,
+        backgroundColor: Colors.green,
       ),
       body: SingleChildScrollView(
-
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             // Status Badge
             Center(
               child: Chip(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(5),
-                ),
                 label: Text(
                   _lembur!.status,
                   style: const TextStyle(
@@ -100,10 +94,6 @@ class _LemburDetailPageState extends State<LemburDetailPage> {
 
             // Info Card
             Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(5),
-              ),
-              color: Colors.white,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -126,10 +116,6 @@ class _LemburDetailPageState extends State<LemburDetailPage> {
 
             // Timeline Card
             Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(5),
-              ),
-              color: Colors.white,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
