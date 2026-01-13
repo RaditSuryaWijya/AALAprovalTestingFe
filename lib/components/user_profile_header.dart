@@ -50,7 +50,16 @@ class UserProfileHeader extends StatelessWidget {
                   user.jabatan.toUpperCase(),
                   style: TextStyle(fontFamily: 'mgopenmodata', fontSize: 16, color: Colors.grey.shade700),
                 ),
-                // ... (Sisa text email dan department sama seperti kode awal Anda)
+                const SizedBox(height: 4),
+                Text(
+                  user.email,
+                  style: TextStyle(fontFamily: 'mgopenmodata', fontSize: 16, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  user.department.toUpperCase(),
+                  style: TextStyle(fontFamily: 'mgopenmodata', fontSize: 16, color: Colors.grey.shade600),
+                ),
                 const SizedBox(height: 12),
                 Align(
                   alignment: Alignment.centerRight,

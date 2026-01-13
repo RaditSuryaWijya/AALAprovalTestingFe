@@ -16,9 +16,7 @@ class ApprovalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-
-      child: Card(
+    return Card(
         color: Colors.grey.shade300,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(5),
@@ -60,7 +58,6 @@ class ApprovalCard extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/lembur_service.dart';
 import '../../models/lembur_model.dart';
 import '../../utils/date_helper.dart';
+import '../base/base_detail_page.dart';
 
 class LemburDetailPage extends StatefulWidget {
   final int lemburId;
@@ -12,7 +13,7 @@ class LemburDetailPage extends StatefulWidget {
   State<LemburDetailPage> createState() => _LemburDetailPageState();
 }
 
-class _LemburDetailPageState extends State<LemburDetailPage> {
+class _LemburDetailPageState extends BaseDetailPageState<LemburDetailPage> {
   LemburModel? _lembur;
   bool _isLoading = true;
 
@@ -51,145 +52,83 @@ class _LemburDetailPageState extends State<LemburDetailPage> {
     }
   }
 
+  // Implement abstract methods dari BaseDetailPageState
   @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
+  bool get isLoading => _isLoading;
 
-    if (_lembur == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Detail Lembur')),
-        body: const Center(child: Text('Data tidak ditemukan')),
-      );
-    }
+  @override
+  bool get isNotFound => _lembur == null;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Detail Lembur'),
-        backgroundColor: Colors.green,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Status Badge
-            Center(
-              child: Chip(
-                label: Text(
-                  _lembur!.status,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                backgroundColor: _getStatusColor(_lembur!.status),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  @override
+  String get pageTitle => 'Detail Lembur';
+
+  @override
+  Widget buildContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Status Badge
+        buildStatusChip(_lembur!.status, _getStatusColor(_lembur!.status)),
+        const SizedBox(height: 24),
+
+        // Info Card
+        buildInfoCard(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              buildInfoRow('Tanggal', _lembur!.tanggal),
+              const Divider(),
+              buildInfoRow('Requestor', _lembur!.requestorEmail),
+              const Divider(),
+              buildInfoRow(
+                'Keterangan',
+                _lembur!.keterangan,
+                isMultiline: true,
               ),
-            ),
-            const SizedBox(height: 24),
-
-            // Info Card
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildInfoRow('Tanggal', _lembur!.tanggal),
-                    const Divider(),
-                    _buildInfoRow('Requestor', _lembur!.requestorEmail),
-                    const Divider(),
-                    _buildInfoRow(
-                      'Keterangan',
-                      _lembur!.keterangan,
-                      isMultiline: true,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Timeline Card
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Timeline Approval',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildTimelineItem(
-                      'Request dibuat',
-                      _lembur!.requestorEmail,
-                      _lembur!.createdAt,
-                      true,
-                    ),
-                    if (_lembur!.spvEmail != null)
-                      _buildTimelineItem(
-                        'Supervisor Approve',
-                        _lembur!.spvEmail!,
-                        _lembur!.tglApproveSpv ?? '',
-                        true,
-                      ),
-                    if (_lembur!.mgrEmail != null)
-                      _buildTimelineItem(
-                        'Manager Approve',
-                        _lembur!.mgrEmail!,
-                        _lembur!.tglApproveMgr ?? '',
-                        true,
-                      ),
-                    if (_lembur!.rejectReason != null)
-                      _buildTimelineItem(
-                        'Reject Reason',
-                        _lembur!.rejectReason!,
-                        '',
-                        false,
-                        isReject: true,
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
-  }
+        const SizedBox(height: 16),
 
-  Widget _buildInfoRow(String label, String value, {bool isMultiline = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-            ),
+        // Timeline Card
+        buildInfoCard(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              buildTitle('Timeline Approval'),
+              const SizedBox(height: 16),
+              _buildTimelineItem(
+                'Request dibuat',
+                _lembur!.requestorEmail,
+                _lembur!.createdAt,
+                true,
+              ),
+              if (_lembur!.spvEmail != null)
+                _buildTimelineItem(
+                  'Supervisor Approve',
+                  _lembur!.spvEmail!,
+                  _lembur!.tglApproveSpv ?? '',
+                  true,
+                ),
+              if (_lembur!.mgrEmail != null)
+                _buildTimelineItem(
+                  'Manager Approve',
+                  _lembur!.mgrEmail!,
+                  _lembur!.tglApproveMgr ?? '',
+                  true,
+                ),
+              if (_lembur!.rejectReason != null)
+                _buildTimelineItem(
+                  'Reject Reason',
+                  _lembur!.rejectReason!,
+                  '',
+                  false,
+                  isReject: true,
+                ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: isMultiline ? FontWeight.normal : FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

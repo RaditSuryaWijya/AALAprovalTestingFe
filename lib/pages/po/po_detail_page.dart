@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/po_service.dart';
 import '../../models/po_model.dart';
 import '../../utils/date_helper.dart';
+import '../base/base_detail_page.dart';
 
 class PODetailPage extends StatefulWidget {
   final int poId;
@@ -12,7 +13,7 @@ class PODetailPage extends StatefulWidget {
   State<PODetailPage> createState() => _PODetailPageState();
 }
 
-class _PODetailPageState extends State<PODetailPage> {
+class _PODetailPageState extends BaseDetailPageState<PODetailPage> {
   POModel? _po;
   bool _isLoading = true;
 
@@ -50,108 +51,51 @@ class _PODetailPageState extends State<PODetailPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
+  bool get isLoading => _isLoading;
 
-    if (_po == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Detail PO')),
-        body: const Center(child: Text('Data tidak ditemukan')),
-      );
-    }
+  @override
+  bool get isNotFound => _po == null;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Detail PO'),
-        backgroundColor: Colors.green,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Status Badge
-            Center(
-              child: Chip(
-                label: Text(
-                  _po!.status,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
+  @override
+  String get pageTitle => 'Detail PO';
+
+  @override
+  Widget buildContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        buildStatusChip(_po!.status, _getStatusColor(_po!.status)),
+        const SizedBox(height: 24),
+
+        buildInfoCard(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              buildInfoRow('Nama Barang', _po!.namaBarang),
+              const Divider(),
+              buildInfoRow('Total Harga', _po!.formattedHarga),
+              const Divider(),
+              buildInfoRow('Creator', _po!.creatorEmail),
+              if (_po!.approverEmail != null) ...[
+                const Divider(),
+                buildInfoRow('Approver', _po!.approverEmail!),
+              ],
+              if (_po!.tglApprove != null) ...[
+                const Divider(),
+                buildInfoRow('Tanggal Approve', _po!.tglApprove!),
+              ],
+              if (_po!.rejectReason != null) ...[
+                const Divider(),
+                buildInfoRow(
+                  'Reject Reason',
+                  _po!.rejectReason!,
+                  isReject: true,
                 ),
-                backgroundColor: _getStatusColor(_po!.status),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Info Card
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildInfoRow('Nama Barang', _po!.namaBarang),
-                    const Divider(),
-                    _buildInfoRow('Total Harga', _po!.formattedHarga),
-                    const Divider(),
-                    _buildInfoRow('Creator', _po!.creatorEmail),
-                    if (_po!.approverEmail != null) ...[
-                      const Divider(),
-                      _buildInfoRow('Approver', _po!.approverEmail!),
-                    ],
-                    if (_po!.tglApprove != null) ...[
-                      const Divider(),
-                      _buildInfoRow('Tanggal Approve', _po!.tglApprove!),
-                    ],
-                    if (_po!.rejectReason != null) ...[
-                      const Divider(),
-                      _buildInfoRow(
-                        'Reject Reason',
-                        _po!.rejectReason!,
-                        isReject: true,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ],
+              ],
+            ],
+          ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value, {bool isReject = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: isReject ? Colors.red : Colors.black,
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 }

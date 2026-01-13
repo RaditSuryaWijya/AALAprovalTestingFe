@@ -5,6 +5,8 @@ import '../services/auth_service.dart';
 import '../services/menu_service.dart';
 import '../utils/route_manager.dart';
 import '../routes/app_routes.dart';
+import '../components/menu_grid_item.dart';
+import '../components/user_profile_header.dart';
 import 'login_page.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -36,8 +38,6 @@ class _DashboardPageState extends State<DashboardPage> {
     try {
       final menuResponse = await MenuService.getMenus();
       if (menuResponse != null) {
-        // Filter menu dashboard karena tidak perlu ditampilkan sebagai card
-        // User sudah berada di halaman dashboard
         final filteredMenus = menuResponse.menus.where((menu) {
           final normalizedLink = menu.menuLink.toLowerCase().replaceAll(RegExp(r'/$'), '');
           return normalizedLink != '/dashboard' && normalizedLink.isNotEmpty;
@@ -61,22 +61,15 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  // Navigate ke halaman berdasarkan menu_link menggunakan named routes
   void _navigateToMenu(MenuModel menu) {
-    // Normalize route name
     final routeName = RouteManager.normalizeRoute(menu.menuLink);
-
-    // Jika dashboard atau tidak valid, tidak perlu navigate
     if (routeName == null) {
       return;
     }
 
-    // Check if route exists in AppRoutes
     if (AppRoutes.hasRoute(routeName)) {
-      // Navigate menggunakan named route - Flutter akan otomatis resolve dari routes map
       Navigator.pushNamed(context, routeName);
     } else {
-      // Show error jika menu_link tidak dikenali
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Menu "${menu.label}" (${menu.menuLink}) belum tersedia'),
@@ -120,11 +113,11 @@ class _DashboardPageState extends State<DashboardPage> {
     final now = DateTime.now();
     // Urutan: Senin(1), Selasa(2), Rabu(3), Kamis(4), Jumat(5), Sabtu(6), Minggu(7)
     final dayNames = [
-      '', // index 0 tidak digunakan
+      '',
       'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'
     ];
     final monthNames = [
-      '', // index 0 tidak digunakan
+      '',
       'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
       'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
     ];
@@ -143,10 +136,10 @@ class _DashboardPageState extends State<DashboardPage> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
-          'AAL APROVAL',
+          'Prototype',
           style: TextStyle(
             fontFamily: 'mgopenmodata',
-            fontWeight: FontWeight.bold,
+            // fontWeight: FontWeight.bold,
           ),
         ),
         backgroundColor: Colors.grey.shade300,
@@ -162,10 +155,8 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       body: Column(
         children: [
-          // Header tetap (tidak ikut scroll)
           _buildHeader(),
           const SizedBox(height: 8),
-          // Area menu scrollable + pull to refresh
           Expanded(
             child: RefreshIndicator(
               onRefresh: _loadMenus,
@@ -177,94 +168,14 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  /// Header profil user (tetap di atas, tidak ikut scroll)
   Widget _buildHeader() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16.0),
-      color: Colors.grey.shade300,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              color: Colors.amber.shade100,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.amber.shade300, width: 2),
-            ),
-            child: Icon(
-              Icons.person,
-              size: 40,
-              color: Colors.blue.shade700,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  widget.user.name.toUpperCase(),
-                  style: const TextStyle(
-                    fontFamily: 'mgopenmodata',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  widget.user.jabatan.toUpperCase(),
-                  style: TextStyle(
-                    fontFamily: 'mgopenmodata',
-                    fontSize: 16,
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  widget.user.email,
-                  style: TextStyle(
-                    fontFamily: 'mgopenmodata',
-                    fontSize: 16,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  widget.user.department.toUpperCase(),
-                  style: TextStyle(
-                    fontFamily: 'mgopenmodata',
-                    fontSize: 16,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    _formatDate(),
-                    style: TextStyle(
-                      fontFamily: 'mgopenmodata',
-                      fontSize: 16,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return UserProfileHeader(
+      user: widget.user,
+      dateString: _formatDate(),
     );
   }
 
-  /// Konten menu (scrollable) untuk RefreshIndicator
   Widget _buildMenuContent() {
-    // Gunakan ListView agar bisa di-scroll
       return ListView(
         padding: EdgeInsets.zero,
         children: [
@@ -326,7 +237,10 @@ class _DashboardPageState extends State<DashboardPage> {
               itemCount: _menus.length,
               itemBuilder: (context, index) {
                 final menu = _menus[index];
-                return _buildMenuCard(menu);
+                return MenuGridItem(
+                  menu: menu,
+                  onTap: () => _navigateToMenu(menu),
+                );
               },
             ),
           ),
@@ -334,48 +248,4 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildMenuCard(MenuModel menu) {
-    return Container(
-      height: 135, 
-      margin: const EdgeInsets.all(1.25), 
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(5), 
-        color: Colors.grey.shade300,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _navigateToMenu(menu),
-          borderRadius: BorderRadius.circular(5),
-          child: Padding(
-            padding: const EdgeInsets.all(5.0), 
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center, 
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  menu.iconData,
-                  size: 60,
-                  color: Colors.blue,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  menu.label.toUpperCase(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontFamily: 'mgopenmodata',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
