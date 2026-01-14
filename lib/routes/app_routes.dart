@@ -6,6 +6,10 @@ import '../pages/po/po_list_page.dart';
 import '../pages/po/po_create_page.dart';
 import '../pages/po/po_approval_page.dart';
 
+import '../pages/cuti/cuti_list_page.dart';
+import '../pages/cuti/cuti_approval_page.dart';
+import '../pages/cuti/cuti_detail_page.dart';
+
 /// App Routes Registry
 /// Semua routes didefinisikan di sini sebagai Map<String, WidgetBuilder>
 /// Backend mengirim menu_link yang sesuai dengan key di routes map ini
@@ -25,6 +29,12 @@ class AppRoutes {
     '/po/create': (context) => const POCreatePage(),
     '/po/approval': (context) => const POApprovalPage(),
     '/po/approve': (context) => const POApprovalPage(),
+
+    // cuti routes
+    '/cuti': (context) => const cutiListPage(),
+    '/cuti/list': (context) => const cutiListPage(),
+    '/cuti/approval': (context) => const cutiApprovalPage(),
+    '/cuti/approve': (context) => const cutiApprovalPage(),
   };
 
   /// Get route builder by route name

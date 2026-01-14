@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/auth_user_model.dart';
 import '../models/menu_model.dart';
-import '../services/auth_service.dart';
 import '../services/menu_service.dart';
 import '../utils/route_manager.dart';
 import '../routes/app_routes.dart';
 import '../components/menu_grid_item.dart';
 import '../components/custom_toolbar.dart';
-import 'login_page.dart';
 
 class DashboardPage extends StatefulWidget {
   final AuthUserModel user;
@@ -76,36 +74,6 @@ class _DashboardPageState extends State<DashboardPage> {
           backgroundColor: Colors.orange,
         ),
       );
-    }
-  }
-
-  Future<void> _handleLogout() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Apakah Anda yakin ingin logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      await AuthService.logout();
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const LoginPage()),
-        );
-      }
     }
   }
 

@@ -10,7 +10,7 @@ class ApiConfig {
 
 
 
-  static const String baseUrl = "https://d558dac8e176.ngrok-free.app/api";
+  static const String baseUrl = "https://9ded782dbb88.ngrok-free.app/api";
 
   // Authentication Endpoints
   static const String login = "$baseUrl/login";
@@ -23,6 +23,12 @@ class ApiConfig {
   static String lemburDetail(int id) => "$lembur/$id";
   static String lemburApproveSupervisor(int id) => "$lembur/$id/approve-supervisor";
   static String lemburApproveManager(int id) => "$lembur/$id/approve-manager";
+
+  // Lembur Cuti
+  static const String cuti = "$baseUrl/cuti";
+  static String cutiDetail(int id) => "$lembur/$id";
+  static String cutiApproveSupervisor(int id) => "$cuti/$id/approve-supervisor";
+  static String cutiApproveManager(int id) => "$cuti/$id/approve-manager";
 
   // PO Endpoints
   static const String po = "$baseUrl/po";

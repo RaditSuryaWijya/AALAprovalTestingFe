@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/auth_user_model.dart';
+import '../services/auth_service.dart';
+import '../pages/login_page.dart';
 
 class CustomToolbar extends StatelessWidget {
   final AuthUserModel user;
@@ -11,6 +13,36 @@ class CustomToolbar extends StatelessWidget {
     required this.dateString,
   });
 
+  Future<void> _handleLogout(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Apakah Anda yakin ingin logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && context.mounted) {
+      await AuthService.logout();
+      if (context.mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -18,14 +50,19 @@ class CustomToolbar extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // AppBar area (tanpa logout button)
+          // AppBar area (dengan exit button)
           SizedBox(
-            height: kToolbarHeight,
+            height: 70,
             child: AppBar(
               backgroundColor: Colors.grey.shade300,
               foregroundColor: Colors.black,
               elevation: 0,
               automaticallyImplyLeading: false,
+              leading: IconButton(
+                icon: const Icon(Icons.exit_to_app),
+                onPressed: () => _handleLogout(context),
+                tooltip: 'Logout',
+              ),
             ),
           ),
           // User Profile Header
