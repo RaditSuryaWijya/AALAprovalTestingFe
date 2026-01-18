@@ -56,10 +56,6 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-/// AuthGate: widget kecil untuk mengecek status login
-/// - Jika sudah login dan user ada => ke DashboardPage
-/// - Jika belum login => ke LoginPage
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
 

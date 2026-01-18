@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import '../../services/cuti_service.dart';
 import '../../models/cuti_model.dart';
 import '../../utils/date_helper.dart';
+import '../../config/api_config.dart';
+import '../pdf_viewer_page.dart';
 import '../base/base_detail_page.dart';
+
 
 class CutiDetailPage extends StatefulWidget {
   final int cutiId;
@@ -67,18 +70,16 @@ class _CutiDetailPageState extends BaseDetailPageState<CutiDetailPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Status Badge
-        buildStatusChip(_cuti!.status, _getStatusColor(_cuti!.status)),
-        const SizedBox(height: 24),
-
         // Info Card
         buildInfoCard(
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              buildInfoRow('Tanggal', _cuti!.tanggal),
+              buildInfoRow('Tanggal',DateHelper.formatDateTime(_cuti!.tanggal) ),
               const Divider(),
               buildInfoRow('Requestor', _cuti!.requestorEmail),
+              const Divider(),
+              buildInfoRow('Status', _cuti!.status,valueColor: _getStatusColor(_cuti!.status)),
               const Divider(),
               buildInfoRow(
                 'Keterangan',
@@ -86,6 +87,27 @@ class _CutiDetailPageState extends BaseDetailPageState<CutiDetailPage> {
                 isMultiline: true,
               ),
             ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Tombol untuk membuka PDF rekap master cuti
+        Align(
+          alignment: Alignment.centerRight,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              final pdfUrl = ApiConfig.exportMaster('cuti');
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => PdfViewerPage(
+                    url: pdfUrl,
+                    title: 'Laporan Cuti',
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.picture_as_pdf),
+            label: const Text('Lihat PDF'),
           ),
         ),
         const SizedBox(height: 16),

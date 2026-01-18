@@ -46,6 +46,8 @@ class MenuModel {
         return Icons.add_circle;
       case 'shopping_cart':
         return Icons.shopping_cart;
+      case 'calendar_month':
+        return Icons.calendar_month;
       case 'add':
         return Icons.add;
       case 'rule':

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../services/lembur_service.dart';
 import '../../models/lembur_model.dart';
 import '../../utils/date_helper.dart';
+import '../../config/api_config.dart';
+import '../pdf_viewer_page.dart';
 import '../base/base_detail_page.dart';
 
 class LemburDetailPage extends StatefulWidget {
@@ -65,20 +67,20 @@ class _LemburDetailPageState extends BaseDetailPageState<LemburDetailPage> {
   @override
   Widget buildContent() {
     return Column(
+      
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Status Badge
-        buildStatusChip(_lembur!.status, _getStatusColor(_lembur!.status)),
-        const SizedBox(height: 24),
-
         // Info Card
         buildInfoCard(
           Column(
+
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              buildInfoRow('Tanggal', _lembur!.tanggal),
+              buildInfoRow('Tanggal',DateHelper.formatDateTime(_lembur!.tanggal) ),
               const Divider(),
               buildInfoRow('Requestor', _lembur!.requestorEmail),
+              const Divider(),
+              buildInfoRow('Status', _lembur!.status,valueColor: _getStatusColor(_lembur!.status)),
               const Divider(),
               buildInfoRow(
                 'Keterangan',
@@ -86,6 +88,27 @@ class _LemburDetailPageState extends BaseDetailPageState<LemburDetailPage> {
                 isMultiline: true,
               ),
             ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Tombol untuk membuka PDF rekap master lembur
+        Align(
+          alignment: Alignment.centerRight,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              final pdfUrl = ApiConfig.exportMaster('lembur');
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => PdfViewerPage(
+                    url: pdfUrl,
+                    title: 'Laporan Lembur',
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.picture_as_pdf),
+            label: const Text('Lihat PDF'),
           ),
         ),
         const SizedBox(height: 16),

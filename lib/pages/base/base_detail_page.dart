@@ -7,7 +7,7 @@ abstract class BaseDetailPageState<T extends StatefulWidget> extends State<T> {
   static const Color appBarBackgroundColor = Colors.grey;
   static const Color appBarForegroundColor = Colors.black;
   static const double appBarElevation = 0.0;
-  static const double contentPadding = 16.0;
+  static const double contentPadding = 7.0;
 
   Color get appBarBgColor => Colors.grey.shade300;
 
@@ -63,11 +63,12 @@ abstract class BaseDetailPageState<T extends StatefulWidget> extends State<T> {
   }
 
   Widget buildInfoRow(
-    String label,
-    String value, {
-    bool isMultiline = false,
-    bool isReject = false,
-  }) {
+      String label,
+      String value, {
+        bool isMultiline = false,
+        bool isReject = false,
+        Color? valueColor,
+      }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Column(
@@ -76,19 +77,17 @@ abstract class BaseDetailPageState<T extends StatefulWidget> extends State<T> {
           Text(
             label,
             style: const TextStyle(
-              fontSize: labelFontSize,
+              fontSize: 12,
               color: Colors.grey,
-              fontFamily: fontFamily,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             value,
             style: TextStyle(
-              fontSize: valueFontSize,
+              fontSize: 14,
               fontWeight: isMultiline ? FontWeight.normal : FontWeight.w500,
-              color: isReject ? Colors.red : Colors.black,
-              fontFamily: fontFamily,
+              color: valueColor ?? (isReject ? Colors.red : Colors.black),
             ),
           ),
         ],
@@ -116,6 +115,10 @@ abstract class BaseDetailPageState<T extends StatefulWidget> extends State<T> {
   Widget buildInfoCard(Widget content) {
     return Card(
       color: Colors.white,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(5.0), // Ubah angka 16 sesuai keinginan
+      ),
       child: Padding(
         padding: const EdgeInsets.all(contentPadding),
         child: content,
@@ -128,7 +131,6 @@ abstract class BaseDetailPageState<T extends StatefulWidget> extends State<T> {
       text,
       style: const TextStyle(
         fontSize: titleFontSize,
-        fontWeight: FontWeight.bold,
         fontFamily: fontFamily,
       ),
     );

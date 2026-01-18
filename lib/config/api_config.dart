@@ -1,22 +1,11 @@
 class ApiConfig {
-  // // Base URL
-  // static const String baseUrl = "http://192.168.1.10:8000/api";
-  //
-  // // Endpoints
-  // static const String login = "$baseUrl/login";
-  // static const String register = "$baseUrl/register";
-  // static const String getProducts = "$baseUrl/products";
-  // static const String updateProfile = "$baseUrl/profile/update";
-
-
-
-  static const String baseUrl = "https://9ded782dbb88.ngrok-free.app/api";
+  static const String baseUrl = "https://f142c7975105.ngrok-free.app/api";
 
   // Authentication Endpoints
   static const String login = "$baseUrl/login";
   static const String logout = "$baseUrl/logout";
   static const String me = "$baseUrl/me";
-  static const String menus = "$baseUrl/menu"; // Get dynamic menus
+  static const String menus = "$baseUrl/menu";
 
   // Lembur Endpoints
   static const String lembur = "$baseUrl/lembur";
@@ -26,7 +15,7 @@ class ApiConfig {
 
   // Lembur Cuti
   static const String cuti = "$baseUrl/cuti";
-  static String cutiDetail(int id) => "$lembur/$id";
+  static String cutiDetail(int id) => "$cuti/$id";
   static String cutiApproveSupervisor(int id) => "$cuti/$id/approve-supervisor";
   static String cutiApproveManager(int id) => "$cuti/$id/approve-manager";
 
@@ -40,4 +29,7 @@ class ApiConfig {
 
   // Endpoint Master Approval (legacy - bisa dihapus jika tidak digunakan)
   static const String approvals = "$baseUrl/master-approvals";
+
+  // Export PDF generik per master (misal: users, cuti, lembur, po)
+  static String exportMaster(String master) => "$baseUrl/export/$master";
 }
