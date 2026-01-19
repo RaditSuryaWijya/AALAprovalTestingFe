@@ -1,5 +1,5 @@
 class ApiConfig {
-  static const String baseUrl = "https://f142c7975105.ngrok-free.app/api";
+  static const String baseUrl = "https://4e46560e2f35.ngrok-free.app/api";
 
   // Authentication Endpoints
   static const String login = "$baseUrl/login";
@@ -32,4 +32,10 @@ class ApiConfig {
 
   // Export PDF generik per master (misal: users, cuti, lembur, po)
   static String exportMaster(String master) => "$baseUrl/export/$master";
+  
+  // Export PDF by ID untuk detail spesifik (misal: users/1, cuti/5, lembur/3)
+  static String exportMasterById(String master, int id) => "$baseUrl/export/$master/$id";
+
+  // Dynamic Approval Endpoints (untuk GenericApprovalPage)
+  static String approvalEndpoint(String master) => "$baseUrl/$master";
 }

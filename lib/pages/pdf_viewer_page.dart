@@ -16,8 +16,8 @@ class PdfViewerPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
-        backgroundColor: Colors.blueAccent, // Sesuaikan tema Anda
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.grey.shade300, // Sesuaikan tema Anda
+        foregroundColor: Colors.black,
       ),
       body: PDF(
         enableSwipe: true,

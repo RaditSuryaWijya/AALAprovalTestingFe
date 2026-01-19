@@ -1,54 +1,26 @@
 import 'package:flutter/material.dart';
-import '../pages/lembur/lembur_list_page.dart';
-import '../pages/lembur/lembur_create_page.dart';
-import '../pages/lembur/lembur_approval_page.dart';
-import '../pages/po/po_list_page.dart';
-import '../pages/po/po_create_page.dart';
-import '../pages/po/po_approval_page.dart';
-
-import '../pages/cuti/cuti_list_page.dart';
-import '../pages/cuti/cuti_approval_page.dart';
-import '../pages/cuti/cuti_detail_page.dart';
+import 'dynamic_route_resolver.dart';
 
 /// App Routes Registry
-/// Semua routes didefinisikan di sini sebagai Map<String, WidgetBuilder>
-/// Backend mengirim menu_link yang sesuai dengan key di routes map ini
+/// 100% Server-Driven Routing
+/// Semua routes di-resolve secara dinamis dari menuLink yang dikirim server
+/// Tidak ada hardcoded routes lagi - semua berdasarkan data dari server
 class AppRoutes {
-  // Routes map - key adalah route name, value adalah WidgetBuilder
-  static final Map<String, WidgetBuilder> routes = {
-    // Lembur routes
-    '/lembur': (context) => const LemburListPage(),
-    '/lembur/list': (context) => const LemburListPage(),
-    '/lembur/create': (context) => const LemburCreatePage(),
-    '/lembur/approval': (context) => const LemburApprovalPage(),
-    '/lembur/approve': (context) => const LemburApprovalPage(),
+  /// Routes map - kosong karena semua di-resolve secara dinamis
+  /// Routes akan di-resolve dari menuLink server menggunakan DynamicRouteResolver
+  static final Map<String, WidgetBuilder> routes = {};
 
-    // PO routes
-    '/po': (context) => const POListPage(),
-    '/po/list': (context) => const POListPage(),
-    '/po/create': (context) => const POCreatePage(),
-    '/po/approval': (context) => const POApprovalPage(),
-    '/po/approve': (context) => const POApprovalPage(),
-
-    // cuti routes
-    '/cuti': (context) => const cutiListPage(),
-    '/cuti/list': (context) => const cutiListPage(),
-    '/cuti/approval': (context) => const cutiApprovalPage(),
-    '/cuti/approve': (context) => const cutiApprovalPage(),
-  };
-
-  /// Get route builder by route name
+  /// Get route builder by route name (Server-Driven)
+  /// Resolve route secara dinamis dari menuLink server
   /// Returns null if route not found
   static WidgetBuilder? getRoute(String routeName) {
-    // Normalize route name
-    final normalizedRoute = _normalizeRoute(routeName);
-    return routes[normalizedRoute];
+    // Resolve route secara dinamis dari menuLink
+    return DynamicRouteResolver.resolveRoute(routeName);
   }
 
-  /// Check if route exists
+  /// Check if route exists (Server-Driven)
   static bool hasRoute(String routeName) {
-    final normalizedRoute = _normalizeRoute(routeName);
-    return routes.containsKey(normalizedRoute);
+    return DynamicRouteResolver.hasRoute(routeName);
   }
 
   /// Normalize route name (lowercase, remove trailing slash)

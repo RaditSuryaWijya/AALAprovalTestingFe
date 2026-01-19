@@ -25,8 +25,27 @@ class MyApp extends StatelessWidget {
       // Langsung gunakan AuthGate untuk cek login dan redirect
       home: const AuthGate(),
       debugShowCheckedModeBanner: false,
-      // Setup named routes menggunakan routes map
+      // Setup named routes - 100% Server-Driven
+      // Routes akan di-resolve secara dinamis dari menuLink server
       routes: AppRoutes.routes,
+      // Handler untuk route yang tidak ditemukan di routes map
+      // Akan di-resolve secara dinamis menggunakan DynamicRouteResolver
+      onGenerateRoute: (settings) {
+        final routeName = settings.name;
+        if (routeName == null) return null;
+
+        // Coba resolve route secara dinamis
+        final builder = AppRoutes.getRoute(routeName);
+        if (builder != null) {
+          return MaterialPageRoute(
+            builder: builder,
+            settings: settings,
+          );
+        }
+
+        // Jika tidak ditemukan, return null (akan di-handle oleh onUnknownRoute)
+        return null;
+      },
       // Handle route yang tidak ditemukan
       onUnknownRoute: (settings) {
         return MaterialPageRoute(
