@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class StorageHelper {
   static const String _tokenKey = 'auth_token';
   static const String _userKey = 'user_data';
+  static const String _deviceIdKey = 'device_id';
 
   // Token Management
   static Future<void> saveToken(String token) async {
@@ -40,6 +41,25 @@ class StorageHelper {
   static Future<void> clearAuth() async {
     await removeToken();
     await removeUserData();
+  }
+
+  // Device ID Management
+  // Generate and persist a pseudo-UUID for this installation
+  static Future<String> getOrCreateDeviceId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getString(_deviceIdKey);
+    if (existing != null && existing.isNotEmpty) return existing;
+
+    final newId = _generatePseudoUuid();
+    await prefs.setString(_deviceIdKey, newId);
+    return newId;
+  }
+
+  static String _generatePseudoUuid() {
+    // Simple pseudo-UUID v4-ish using timestamps + random
+    final millis = DateTime.now().millisecondsSinceEpoch;
+    final random = DateTime.now().microsecondsSinceEpoch.remainder(1 << 32);
+    return '${millis.toRadixString(16)}-${random.toRadixString(16)}';
   }
 }
 

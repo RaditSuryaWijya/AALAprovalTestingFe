@@ -41,6 +41,7 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
   List<ApprovalItem> _items = [];
   bool _isLoading = false;
   String? _pageTitle;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -85,9 +86,25 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
 
   /// Handle approve action
   Future<void> _handleApprove(ApprovalItem item) async {
+    if (_isSubmitting) return;
+    setState(() {
+      _isSubmitting = true;
+    });
+
     final result = await _controller.approve(item.id);
 
-    if (mounted) {
+    if (!mounted) return;
+
+    // Handle 409 conflict
+    if (result['conflict'] == true || result['statusCode'] == 409) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Data sudah diproses, silakan refresh'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      _loadItems(); // refresh list
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(result['message'] ?? ''),
@@ -99,10 +116,15 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
         _loadItems(); // Reload items setelah approve
       }
     }
+
+    setState(() {
+      _isSubmitting = false;
+    });
   }
 
   /// Handle reject action
   Future<void> _handleReject(ApprovalItem item) async {
+    if (_isSubmitting) return;
     // Show dialog untuk input reject reason
     final rejectReason = await showDialog<String>(
       context: context,
@@ -135,9 +157,24 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
       return;
     }
 
+    setState(() {
+      _isSubmitting = true;
+    });
+
     final result = await _controller.reject(item.id, rejectReason: rejectReason);
 
-    if (mounted) {
+    if (!mounted) return;
+
+    // Handle 409 conflict
+    if (result['conflict'] == true || result['statusCode'] == 409) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Data sudah diproses, silakan refresh'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      _loadItems(); // refresh list
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(result['message'] ?? ''),
@@ -149,6 +186,10 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
         _loadItems(); // Reload items setelah reject
       }
     }
+
+    setState(() {
+      _isSubmitting = false;
+    });
   }
 
   /// Handle detail action - buka PDF viewer

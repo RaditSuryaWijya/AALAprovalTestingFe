@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'dart:math';
 import 'package:http/http.dart' as http;
 import '../models/approval_item.dart';
 import '../controllers/approval_controller.dart';
@@ -37,14 +40,79 @@ class DynamicApprovalController implements ApprovalController {
     required this.masterName,
   });
 
+  /// Generate correlation id (UUID-like) per request
+  String _generateCorrelationId() {
+    final millis = DateTime.now().millisecondsSinceEpoch;
+    final random = Random().nextInt(1 << 32);
+    return '${millis.toRadixString(16)}-${random.toRadixString(16)}';
+  }
+
   /// Helper untuk mendapatkan headers dengan token
   Future<Map<String, String>> _getHeaders() async {
     final token = await StorageHelper.getToken();
+    final deviceId = await StorageHelper.getOrCreateDeviceId();
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'X-Correlation-Id': _generateCorrelationId(),
+      'X-Device-Id': deviceId,
       if (token != null) 'Authorization': 'Bearer $token',
     };
+  }
+
+  /// Helper POST with retry & backoff for network issues (no retry on 4xx)
+  Future<http.Response> _postWithRetry(
+    Uri url, {
+    required Map<String, String> headers,
+    required Object body,
+    int maxRetries = 3,
+  }) async {
+    int attempt = 0;
+    Duration delay = const Duration(milliseconds: 700);
+
+    while (true) {
+      attempt++;
+      try {
+        final response = await http
+            .post(url, headers: headers, body: body)
+            .timeout(const Duration(seconds: 10));
+        // Retry only on network/timeouts; not on 4xx (including 409) or 5xx unless network error
+        return response;
+      } on SocketException catch (_) {
+        if (attempt >= maxRetries) rethrow;
+      } on TimeoutException catch (_) {
+        if (attempt >= maxRetries) rethrow;
+      }
+
+      await Future.delayed(delay);
+      delay *= 2; // exponential backoff
+    }
+  }
+
+  /// Helper GET with retry for network issues
+  Future<http.Response> _getWithRetry(
+    Uri url, {
+    required Map<String, String> headers,
+    int maxRetries = 3,
+  }) async {
+    int attempt = 0;
+    Duration delay = const Duration(milliseconds: 700);
+
+    while (true) {
+      attempt++;
+      try {
+        final response = await http
+            .get(url, headers: headers)
+            .timeout(const Duration(seconds: 10));
+        return response;
+      } on SocketException catch (_) {
+        if (attempt >= maxRetries) rethrow;
+      } on TimeoutException catch (_) {
+        if (attempt >= maxRetries) rethrow;
+      }
+      await Future.delayed(delay);
+      delay *= 2;
+    }
   }
 
   /// Load items dari API
@@ -59,7 +127,7 @@ class DynamicApprovalController implements ApprovalController {
     try {
       final url = Uri.parse(apiUrl);
       final headers = await _getHeaders();
-      final response = await http.get(url, headers: headers);
+      final response = await _getWithRetry(url, headers: headers);
 
       if (response.statusCode != 200) {
         throw Exception('Failed to load items: ${response.statusCode}');
@@ -156,7 +224,7 @@ class DynamicApprovalController implements ApprovalController {
       final url = Uri.parse(approveUrl);
       final headers = await _getHeaders();
 
-      final response = await http.post(
+      final response = await _postWithRetry(
         url,
         headers: headers,
         body: jsonEncode({
@@ -169,17 +237,29 @@ class DynamicApprovalController implements ApprovalController {
         return {
           'success': responseData['success'] ?? true,
           'message': responseData['message']?.toString() ?? 'Approved successfully',
+          'statusCode': response.statusCode,
+        };
+      } else if (response.statusCode == 409) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        return {
+          'success': false,
+          'conflict': true,
+          'statusCode': response.statusCode,
+          'message': responseData['message']?.toString() ??
+              'Data sudah diproses, silakan refresh',
         };
       } else {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
         return {
           'success': false,
+          'statusCode': response.statusCode,
           'message': errorData['message']?.toString() ?? 'Failed to approve: ${response.statusCode}',
         };
       }
     } catch (e) {
       return {
         'success': false,
+        'statusCode': null,
         'message': 'Error approving: $e',
       };
     }
@@ -204,7 +284,7 @@ class DynamicApprovalController implements ApprovalController {
       final url = Uri.parse(rejectUrl);
       final headers = await _getHeaders();
 
-      final response = await http.post(
+      final response = await _postWithRetry(
         url,
         headers: headers,
         body: jsonEncode({
@@ -218,17 +298,29 @@ class DynamicApprovalController implements ApprovalController {
         return {
           'success': responseData['success'] ?? true,
           'message': responseData['message']?.toString() ?? 'Rejected successfully',
+          'statusCode': response.statusCode,
+        };
+      } else if (response.statusCode == 409) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        return {
+          'success': false,
+          'conflict': true,
+          'statusCode': response.statusCode,
+          'message': responseData['message']?.toString() ??
+              'Data sudah diproses, silakan refresh',
         };
       } else {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
         return {
           'success': false,
+          'statusCode': response.statusCode,
           'message': errorData['message']?.toString() ?? 'Failed to reject: ${response.statusCode}',
         };
       }
     } catch (e) {
       return {
         'success': false,
+        'statusCode': null,
         'message': 'Error rejecting: $e',
       };
     }
