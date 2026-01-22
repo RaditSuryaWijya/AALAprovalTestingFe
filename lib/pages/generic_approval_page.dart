@@ -30,13 +30,16 @@ class GenericApprovalPage extends StatefulWidget {
 
 class _GenericApprovalPageState extends State<GenericApprovalPage> {
   late ApprovalController _controller;
+  late ScrollController _scrollController;
   List<ApprovalItem> _items = [];
   bool _isLoading = false;
+  bool _isLoadingMore = false;
   String? _pageTitle;
   bool _isSubmitting = false;
   PaginationMetadata? _pagination;
   int _currentPage = 1;
-  int _perPage = 10;
+  int _perPage = 5;
+  bool _hasMorePages = true;
 
   /// Inisialisasi controller dan langsung memuat data awal.
   @override
@@ -46,17 +49,35 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
       apiUrl: widget.apiUrl,
       masterName: widget.masterName,
     );
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
     _loadItems();
   }
 
-  /// Memuat ulang daftar item approval dari API dengan pagination.
-  Future<void> _loadItems({int? page}) async {
-    if (page != null) {
-      _currentPage = page;
-    }
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
 
+  /// Listener untuk detect scroll ke bawah dan trigger load more.
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !_isLoadingMore &&
+        _hasMorePages &&
+        !_isLoading) {
+      _loadMoreItems();
+    }
+  }
+
+  /// Memuat ulang daftar item approval dari API (reset ke halaman 1).
+  Future<void> _loadItems() async {
     setState(() {
       _isLoading = true;
+      _currentPage = 1;
+      _hasMorePages = true;
     });
 
     try {
@@ -71,6 +92,7 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
         _items = items;
         _pageTitle = title;
         _pagination = pagination;
+        _hasMorePages = pagination != null && pagination.currentPage < pagination.lastPage;
         _isLoading = false;
       });
     } catch (e) {
@@ -82,6 +104,45 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Memuat halaman berikutnya dan append ke data yang sudah ada.
+  Future<void> _loadMoreItems() async {
+    if (!_hasMorePages || _isLoadingMore || _isLoading) return;
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    try {
+      final nextPage = _currentPage + 1;
+      final items = await _controller.loadItems(
+        page: nextPage,
+        perPage: _perPage,
+      );
+      final pagination = _controller.getPagination();
+
+      setState(() {
+        _items.addAll(items);
+        _pagination = pagination;
+        _currentPage = nextPage;
+        _hasMorePages = pagination != null && pagination.currentPage < pagination.lastPage;
+        _isLoadingMore = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingMore = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error memuat data: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -334,72 +395,27 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
                 )
               : RefreshIndicator(
                   onRefresh: () => _loadItems(),
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: ListView.builder(
-                          padding: const EdgeInsets.all(16.0),
-                          itemCount: _items.length,
-                          itemBuilder: (context, index) {
-                            return _buildApprovalCard(_items[index]);
-                          },
-                        ),
-                      ),
-                      if (_pagination != null) _buildPaginationControls(),
-                    ],
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.all(16.0),
+                    itemCount: _items.length + (_isLoadingMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == _items.length) {
+                        return _buildLoadingMoreIndicator();
+                      }
+                      return _buildApprovalCard(_items[index]);
+                    },
                   ),
                 ),
     );
   }
 
-  /// Membangun kontrol pagination (tombol prev/next dan info halaman).
-  Widget _buildPaginationControls() {
-    final pagination = _pagination!;
+  /// Membangun loading indicator di bawah list saat memuat data berikutnya.
+  Widget _buildLoadingMoreIndicator() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        border: Border(
-          top: BorderSide(color: Colors.grey.shade300, width: 1),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Halaman ${pagination.currentPage} dari ${pagination.lastPage}',
-            style: const TextStyle(
-              fontSize: 14,
-              fontFamily: 'mgopenmodata',
-            ),
-          ),
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                onPressed: pagination.hasPreviousPage
-                    ? () => _loadItems(page: pagination.currentPage - 1)
-                    : null,
-                tooltip: 'Halaman Sebelumnya',
-              ),
-              Text(
-                '${pagination.from}-${pagination.to} dari ${pagination.total}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontFamily: 'mgopenmodata',
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                onPressed: pagination.hasNextPage
-                    ? () => _loadItems(page: pagination.currentPage + 1)
-                    : null,
-                tooltip: 'Halaman Berikutnya',
-              ),
-            ],
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      alignment: Alignment.center,
+      child: const CircularProgressIndicator(),
     );
   }
 }
