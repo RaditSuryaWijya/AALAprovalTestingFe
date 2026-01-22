@@ -2,26 +2,18 @@ import 'package:flutter/material.dart';
 import '../controllers/dynamic_approval_controller.dart';
 import '../controllers/approval_controller.dart';
 import '../models/approval_item.dart';
+import '../models/pagination_metadata.dart';
 import '../config/api_config.dart';
 import '../components/approval_card.dart';
 import 'pdf_viewer_page.dart';
 import '../utils/date_helper.dart';
 
-/// GenericApprovalPage
-/// Halaman approval generik yang dapat bekerja dengan berbagai master
-/// menggunakan DynamicApprovalController
+/// Halaman approval generik yang menampilkan dan memproses daftar `ApprovalItem`
+/// untuk berbagai master (lembur, cuti, po, dll) menggunakan `DynamicApprovalController`.
 class GenericApprovalPage extends StatefulWidget {
-  /// URL API untuk load items
   final String apiUrl;
-
-  /// Master name (untuk export PDF, dll)
-  /// Contoh: 'cuti', 'lembur', 'po'
   final String masterName;
-
-  /// Empty message custom (opsional)
   final String? emptyMessage;
-
-  /// Empty icon custom (opsional)
   final IconData? emptyIcon;
 
   const GenericApprovalPage({
@@ -42,7 +34,11 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
   bool _isLoading = false;
   String? _pageTitle;
   bool _isSubmitting = false;
+  PaginationMetadata? _pagination;
+  int _currentPage = 1;
+  int _perPage = 10;
 
+  /// Inisialisasi controller dan langsung memuat data awal.
   @override
   void initState() {
     super.initState();
@@ -53,19 +49,28 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
     _loadItems();
   }
 
-  /// Load items dari controller
-  Future<void> _loadItems() async {
+  /// Memuat ulang daftar item approval dari API dengan pagination.
+  Future<void> _loadItems({int? page}) async {
+    if (page != null) {
+      _currentPage = page;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final items = await _controller.loadItems();
+      final items = await _controller.loadItems(
+        page: _currentPage,
+        perPage: _perPage,
+      );
       final title = _controller.getPageTitle();
+      final pagination = _controller.getPagination();
 
       setState(() {
         _items = items;
         _pageTitle = title;
+        _pagination = pagination;
         _isLoading = false;
       });
     } catch (e) {
@@ -84,7 +89,7 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
     }
   }
 
-  /// Handle approve action
+  /// Handler untuk aksi approve pada satu item.
   Future<void> _handleApprove(ApprovalItem item) async {
     if (_isSubmitting) return;
     setState(() {
@@ -95,7 +100,6 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
 
     if (!mounted) return;
 
-    // Handle 409 conflict
     if (result['conflict'] == true || result['statusCode'] == 409) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -103,7 +107,7 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
           backgroundColor: Colors.orange,
         ),
       );
-      _loadItems(); // refresh list
+      _loadItems();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -113,7 +117,7 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
       );
 
       if (result['success'] == true) {
-        _loadItems(); // Reload items setelah approve
+        _loadItems();
       }
     }
 
@@ -122,10 +126,9 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
     });
   }
 
-  /// Handle reject action
+  /// Handler untuk aksi reject pada satu item, termasuk input alasan.
   Future<void> _handleReject(ApprovalItem item) async {
     if (_isSubmitting) return;
-    // Show dialog untuk input reject reason
     final rejectReason = await showDialog<String>(
       context: context,
       builder: (context) {
@@ -165,7 +168,6 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
 
     if (!mounted) return;
 
-    // Handle 409 conflict
     if (result['conflict'] == true || result['statusCode'] == 409) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -173,7 +175,7 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
           backgroundColor: Colors.orange,
         ),
       );
-      _loadItems(); // refresh list
+      _loadItems();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -183,7 +185,7 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
       );
 
       if (result['success'] == true) {
-        _loadItems(); // Reload items setelah reject
+        _loadItems();
       }
     }
 
@@ -192,7 +194,7 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
     });
   }
 
-  /// Handle detail action - buka PDF viewer
+  /// Handler untuk membuka detail dalam bentuk PDF viewer.
   void _handleDetail(ApprovalItem item) {
     final pdfUrl = ApiConfig.exportMasterById(widget.masterName, item.id);
     Navigator.push(
@@ -206,9 +208,8 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
     );
   }
 
-  /// Build content untuk approval card
+  /// Membangun konten teks di dalam kartu approval untuk satu item.
   Widget _buildCardContent(ApprovalItem item) {
-    // Format date jika ada
     String? formattedDate;
     if (item.date != null && item.date!.isNotEmpty) {
       try {
@@ -218,7 +219,6 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
       }
     }
 
-    // Split title dan subtitle untuk multiple lines jika panjang
     final titleParts = item.title.length > 30
         ? [
             item.title.substring(0, 30),
@@ -322,7 +322,7 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton.icon(
-                        onPressed: _loadItems,
+                        onPressed: () => _loadItems(),
                         icon: const Icon(Icons.refresh),
                         label: const Text('Refresh'),
                         style: ElevatedButton.styleFrom(
@@ -333,15 +333,73 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
                   ),
                 )
               : RefreshIndicator(
-                  onRefresh: _loadItems,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    itemCount: _items.length,
-                    itemBuilder: (context, index) {
-                      return _buildApprovalCard(_items[index]);
-                    },
+                  onRefresh: () => _loadItems(),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(16.0),
+                          itemCount: _items.length,
+                          itemBuilder: (context, index) {
+                            return _buildApprovalCard(_items[index]);
+                          },
+                        ),
+                      ),
+                      if (_pagination != null) _buildPaginationControls(),
+                    ],
                   ),
                 ),
+    );
+  }
+
+  /// Membangun kontrol pagination (tombol prev/next dan info halaman).
+  Widget _buildPaginationControls() {
+    final pagination = _pagination!;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        border: Border(
+          top: BorderSide(color: Colors.grey.shade300, width: 1),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Halaman ${pagination.currentPage} dari ${pagination.lastPage}',
+            style: const TextStyle(
+              fontSize: 14,
+              fontFamily: 'mgopenmodata',
+            ),
+          ),
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.chevron_left),
+                onPressed: pagination.hasPreviousPage
+                    ? () => _loadItems(page: pagination.currentPage - 1)
+                    : null,
+                tooltip: 'Halaman Sebelumnya',
+              ),
+              Text(
+                '${pagination.from}-${pagination.to} dari ${pagination.total}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'mgopenmodata',
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right),
+                onPressed: pagination.hasNextPage
+                    ? () => _loadItems(page: pagination.currentPage + 1)
+                    : null,
+                tooltip: 'Halaman Berikutnya',
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

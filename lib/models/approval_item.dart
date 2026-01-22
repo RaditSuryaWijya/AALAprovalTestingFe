@@ -1,22 +1,10 @@
-/// Model untuk item approval yang digunakan di GenericApprovalPage
-/// Model ini menyimpan data yang akan ditampilkan di card approval
+/// Representasi satu baris data yang akan ditampilkan di kartu approval.
 class ApprovalItem {
-  /// ID unik dari item (untuk approve/reject/detail)
   final int id;
-
-  /// Judul utama yang ditampilkan di card
   final String title;
-
-  /// Subtitle/deskripsi yang ditampilkan di card
   final String subtitle;
-
-  /// Tanggal/keterangan waktu (opsional)
   final String? date;
-
-  /// Status approval (PENDING, APPROVED, REJECTED, dll)
   final String? status;
-
-  /// Data mentah dari JSON (untuk keperluan tambahan jika diperlukan)
   final Map<String, dynamic>? rawData;
 
   ApprovalItem({
@@ -28,13 +16,11 @@ class ApprovalItem {
     this.rawData,
   });
 
-  /// Factory constructor untuk membuat ApprovalItem dari JSON
-  /// Menggunakan mapping dinamis dari config
+  /// Membuat `ApprovalItem` dari JSON mentah menggunakan konfigurasi mapping dinamis.
   factory ApprovalItem.fromJson(
     Map<String, dynamic> json,
     Map<String, String> mapping,
   ) {
-    // Helper function untuk mendapatkan value dari JSON berdasarkan key mapping
     String? getMappedValue(String key) {
       final fieldName = mapping[key];
       if (fieldName == null) return null;
@@ -51,7 +37,7 @@ class ApprovalItem {
     );
   }
 
-  /// Convert ke JSON (untuk debugging atau keperluan lain)
+  /// Mengubah `ApprovalItem` kembali ke bentuk map (berguna untuk logging/debug).
   Map<String, dynamic> toJson() {
     return {
       'id': id,

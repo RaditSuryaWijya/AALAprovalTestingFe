@@ -1,28 +1,13 @@
 import '../models/approval_item.dart';
+import '../models/pagination_metadata.dart';
 
-/// Abstract class untuk controller approval
-/// Semua controller approval harus mengimplementasikan interface ini
+/// Kontrak dasar untuk semua controller approval.
+/// Memisahkan UI dari detail implementasi pengambilan dan pemrosesan data approval.
 abstract class ApprovalController {
-  /// Load items dari API
-  /// Return List<ApprovalItem> yang sudah di-mapping
-  Future<List<ApprovalItem>> loadItems();
-
-  /// Approve item dengan ID tertentu
-  /// [id] adalah ID dari item yang akan di-approve
-  /// Return Map dengan 'success' dan 'message'
+  Future<List<ApprovalItem>> loadItems({int page = 1, int perPage = 15});
   Future<Map<String, dynamic>> approve(int id);
-
-  /// Reject item dengan ID tertentu
-  /// [id] adalah ID dari item yang akan di-reject
-  /// [rejectReason] adalah alasan reject (opsional)
-  /// Return Map dengan 'success' dan 'message'
   Future<Map<String, dynamic>> reject(int id, {String? rejectReason});
-
-  /// Get page title untuk halaman approval
-  /// Bisa diambil dari config API atau hardcoded
   String getPageTitle();
-
-  /// Get master name (untuk export PDF, dll)
-  /// Contoh: 'cuti', 'lembur', 'po'
   String getMasterName();
+  PaginationMetadata? getPagination();
 }

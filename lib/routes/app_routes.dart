@@ -1,20 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dynamic_route_resolver.dart';
 
-/// App Routes Registry
-/// 100% Server-Driven Routing
-/// Semua routes di-resolve secara dinamis dari menuLink yang dikirim server
-/// Tidak ada hardcoded routes lagi - semua berdasarkan data dari server
+/// Gerbang utama untuk named routes.
+/// Saat ini semua route di-resolve secara dinamis lewat `DynamicRouteResolver`.
 class AppRoutes {
-  /// Routes map - kosong karena semua di-resolve secara dinamis
-  /// Routes akan di-resolve dari menuLink server menggunakan DynamicRouteResolver
   static final Map<String, WidgetBuilder> routes = {};
-
-  /// Get route builder by route name (Server-Driven)
-  /// Resolve route secara dinamis dari menuLink server
-  /// Returns null if route not found
   static WidgetBuilder? getRoute(String routeName) {
-    // Resolve route secara dinamis dari menuLink
     return DynamicRouteResolver.resolveRoute(routeName);
   }
 

@@ -4,50 +4,32 @@ import 'dart:io';
 import 'dart:math';
 import 'package:http/http.dart' as http;
 import '../models/approval_item.dart';
+import '../models/pagination_metadata.dart';
 import '../controllers/approval_controller.dart';
 import '../utils/storage_helper.dart';
 
-/// DynamicApprovalController
-/// Controller yang dapat bekerja dengan API dinamis berdasarkan config
-/// 
-/// Controller ini menerima apiUrl saat inisialisasi dan akan:
-/// 1. GET request ke apiUrl untuk mendapatkan data dan config
-/// 2. Membaca config untuk mendapatkan pageTitle dan mapping
-/// 3. Mapping data JSON mentah menjadi List<ApprovalItem>
-/// 4. Handle approve/reject dengan endpoint dinamis
+/// Controller approval generik yang mengambil konfigurasi dan data dari API
+/// lalu memetakan response menjadi `ApprovalItem` untuk digunakan di UI.
 class DynamicApprovalController implements ApprovalController {
-  /// URL API untuk load items
   final String apiUrl;
-
-  /// Master name (untuk export PDF, dll)
-  /// Contoh: 'cuti', 'lembur', 'po'
   final String masterName;
-
-  /// Config yang didapat dari API response
   Map<String, dynamic>? _config;
-
-  /// Mapping field dari config
-  Map<String, String>? _mapping;
-
-  /// Page title dari config
   String? _pageTitle;
+  PaginationMetadata? _pagination;
 
-  /// Constructor
-  /// [apiUrl] adalah URL endpoint untuk GET data (contoh: '/api/approval/cuti')
-  /// [masterName] adalah nama master (contoh: 'cuti', 'lembur', 'po')
   DynamicApprovalController({
     required this.apiUrl,
     required this.masterName,
   });
 
-  /// Generate correlation id (UUID-like) per request
+  /// Membuat ID korelasi per request untuk keperluan tracing/logging.
   String _generateCorrelationId() {
     final millis = DateTime.now().millisecondsSinceEpoch;
     final random = Random().nextInt(1 << 32);
     return '${millis.toRadixString(16)}-${random.toRadixString(16)}';
   }
 
-  /// Helper untuk mendapatkan headers dengan token
+  /// Menyusun header HTTP standar (auth, tracing, device ID).
   Future<Map<String, String>> _getHeaders() async {
     final token = await StorageHelper.getToken();
     final deviceId = await StorageHelper.getOrCreateDeviceId();
@@ -60,7 +42,7 @@ class DynamicApprovalController implements ApprovalController {
     };
   }
 
-  /// Helper POST with retry & backoff for network issues (no retry on 4xx)
+  /// Melakukan POST dengan retry & exponential backoff untuk error jaringan/timeout.
   Future<http.Response> _postWithRetry(
     Uri url, {
     required Map<String, String> headers,
@@ -76,7 +58,7 @@ class DynamicApprovalController implements ApprovalController {
         final response = await http
             .post(url, headers: headers, body: body)
             .timeout(const Duration(seconds: 10));
-        // Retry only on network/timeouts; not on 4xx (including 409) or 5xx unless network error
+
         return response;
       } on SocketException catch (_) {
         if (attempt >= maxRetries) rethrow;
@@ -85,11 +67,11 @@ class DynamicApprovalController implements ApprovalController {
       }
 
       await Future.delayed(delay);
-      delay *= 2; // exponential backoff
+      delay *= 2;
     }
   }
 
-  /// Helper GET with retry for network issues
+  /// Melakukan GET dengan retry & exponential backoff untuk error jaringan/timeout.
   Future<http.Response> _getWithRetry(
     Uri url, {
     required Map<String, String> headers,
@@ -115,17 +97,15 @@ class DynamicApprovalController implements ApprovalController {
     }
   }
 
-  /// Load items dari API
-  /// 
-  /// Flow:
-  /// 1. GET request ke apiUrl
-  /// 2. Baca object config dari JSON response untuk mendapatkan pageTitle
-  /// 3. Baca object config['mapping'] untuk mengetahui key mapping
-  /// 4. Mapping data JSON mentah menjadi List<ApprovalItem>
+  /// Mengambil dan memetakan daftar item approval dari API menjadi `List<ApprovalItem>`.
   @override
-  Future<List<ApprovalItem>> loadItems() async {
+  Future<List<ApprovalItem>> loadItems({int page = 1, int perPage = 15}) async {
     try {
-      final url = Uri.parse(apiUrl);
+      final uri = Uri.parse(apiUrl);
+      final url = uri.replace(queryParameters: {
+        'page': page.toString(),
+        'per_page': perPage.toString(),
+      });
       final headers = await _getHeaders();
       final response = await _getWithRetry(url, headers: headers);
 
@@ -134,68 +114,44 @@ class DynamicApprovalController implements ApprovalController {
       }
 
       final responseData = jsonDecode(response.body) as Map<String, dynamic>;
-
-      // Cek apakah response success
       final bool success = responseData['success'] ?? false;
       if (!success) {
         throw Exception('API returned success: false');
       }
-
-      // Baca config dari response
       if (responseData['config'] != null) {
         _config = responseData['config'] as Map<String, dynamic>;
-
-        // Baca page_title dari config
         _pageTitle = _config!['page_title']?.toString();
-
-        // Baca mapping dari config
-        if (_config!['mapping'] != null) {
-          final mappingData = _config!['mapping'] as Map<String, dynamic>;
-          _mapping = {};
-          mappingData.forEach((key, value) {
-            _mapping![key] = value.toString();
-          });
-        }
       }
-
-      // Baca data dari response
+      if (responseData['pagination'] != null) {
+        _pagination = PaginationMetadata.fromJson(
+          responseData['pagination'] as Map<String, dynamic>,
+        );
+      }
       final List<ApprovalItem> items = [];
       if (responseData['data'] != null) {
         final data = responseData['data'];
         if (data is List) {
-          // Jika data adalah array
           for (final item in data) {
             if (item is Map<String, dynamic>) {
-              // Mapping menggunakan config mapping
-              if (_mapping != null) {
-                items.add(ApprovalItem.fromJson(item, _mapping!));
-              } else {
-                // Fallback jika tidak ada mapping, gunakan field default
-                items.add(ApprovalItem(
-                  id: item['id'] ?? 0,
-                  title: item['title']?.toString() ?? '',
-                  subtitle: item['subtitle']?.toString() ?? '',
-                  date: item['date']?.toString(),
-                  status: item['status']?.toString(),
-                  rawData: item,
-                ));
-              }
+              items.add(ApprovalItem(
+                id: item['id'] ?? 0,
+                title: item['title']?.toString() ?? '',
+                subtitle: item['subtitle']?.toString() ?? '',
+                date: item['date']?.toString(),
+                status: item['status']?.toString(),
+                rawData: item,
+              ));
             }
           }
         } else if (data is Map<String, dynamic>) {
-          // Jika data adalah single object
-          if (_mapping != null) {
-            items.add(ApprovalItem.fromJson(data, _mapping!));
-          } else {
-            items.add(ApprovalItem(
-              id: data['id'] ?? 0,
-              title: data['title']?.toString() ?? '',
-              subtitle: data['subtitle']?.toString() ?? '',
-              date: data['date']?.toString(),
-              status: data['status']?.toString(),
-              rawData: data,
-            ));
-          }
+          items.add(ApprovalItem(
+            id: data['id'] ?? 0,
+            title: data['title']?.toString() ?? '',
+            subtitle: data['subtitle']?.toString() ?? '',
+            date: data['date']?.toString(),
+            status: data['status']?.toString(),
+            rawData: data,
+          ));
         }
       }
 
@@ -205,21 +161,9 @@ class DynamicApprovalController implements ApprovalController {
     }
   }
 
-  /// Approve item dengan ID tertentu
-  /// 
-  /// Endpoint yang digunakan: {apiUrl}/{id}/approve
-  /// Method: POST
-  /// Body: { "action": "approve" }
-  /// 
-  /// Backend akan menentukan level approval (supervisor/manager/dll) 
-  /// berdasarkan role user dari token Authorization header
-  /// Frontend tidak perlu tahu level approval - semua di-handle oleh backend
   @override
   Future<Map<String, dynamic>> approve(int id) async {
     try {
-      // Construct approve URL: {apiUrl}/{id}/approve
-      // Contoh: /api/lembur/5/approve
-      // Backend akan membaca token dan menentukan apakah approve sebagai supervisor/manager
       final approveUrl = '$apiUrl/$id/approve';
       final url = Uri.parse(approveUrl);
       final headers = await _getHeaders();
@@ -265,21 +209,9 @@ class DynamicApprovalController implements ApprovalController {
     }
   }
 
-  /// Reject item dengan ID tertentu
-  /// 
-  /// Endpoint yang digunakan: {apiUrl}/{id}/reject
-  /// Method: POST
-  /// Body: { "action": "reject", "reject_reason": rejectReason }
-  /// 
-  /// Backend akan menentukan level approval (supervisor/manager/dll) 
-  /// berdasarkan role user dari token Authorization header
-  /// Frontend tidak perlu tahu level approval - semua di-handle oleh backend
   @override
   Future<Map<String, dynamic>> reject(int id, {String? rejectReason}) async {
     try {
-      // Construct reject URL: {apiUrl}/{id}/reject
-      // Contoh: /api/lembur/5/reject
-      // Backend akan membaca token dan menentukan apakah reject sebagai supervisor/manager
       final rejectUrl = '$apiUrl/$id/reject';
       final url = Uri.parse(rejectUrl);
       final headers = await _getHeaders();
@@ -326,8 +258,6 @@ class DynamicApprovalController implements ApprovalController {
     }
   }
 
-  /// Get page title dari config
-  /// Jika config belum di-load atau tidak ada, return default title
   @override
   String getPageTitle() {
     return _pageTitle ?? 'Approval $masterName';
@@ -342,6 +272,6 @@ class DynamicApprovalController implements ApprovalController {
   /// Get config yang sudah di-load (untuk keperluan tambahan)
   Map<String, dynamic>? getConfig() => _config;
 
-  /// Get mapping yang sudah di-load (untuk keperluan tambahan)
-  Map<String, String>? getMapping() => _mapping;
+  @override
+  PaginationMetadata? getPagination() => _pagination;
 }

@@ -19,10 +19,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
-        fontFamily: 'mgopenmodata', // Default font untuk aplikasi
+        fontFamily: 'mgopenmodata',
       ),
-      // Tidak lagi menggunakan custom SplashScreenPage
-      // Langsung gunakan AuthGate untuk cek login dan redirect
       home: const AuthGate(),
       debugShowCheckedModeBanner: false,
       // Setup named routes - 100% Server-Driven

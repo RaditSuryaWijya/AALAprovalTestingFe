@@ -2,31 +2,15 @@ import 'package:flutter/material.dart';
 import '../pages/generic_approval_page.dart';
 import '../config/api_config.dart';
 
-/// Dynamic Route Resolver
-/// Resolver untuk membuat widget secara dinamis berdasarkan menuLink dari server
-/// 100% Server-Driven Routing
+/// Resolver yang mengubah `menu_link` dari backend menjadi halaman Flutter.
 class DynamicRouteResolver {
-  /// Resolve route dari menuLink menjadi WidgetBuilder
-  /// 
-  /// Format menuLink yang didukung:
-  /// - /{master}/approval atau /{master}/approve -> GenericApprovalPage
-  /// - /{master} -> GenericApprovalPage (default untuk approval)
-  /// 
-  /// Contoh:
-  /// - /lembur/approval -> GenericApprovalPage untuk lembur
-  /// - /cuti/approve -> GenericApprovalPage untuk cuti
-  /// - /po/approval -> GenericApprovalPage untuk po
+  /// Menghasilkan `WidgetBuilder` dari string `menuLink` (mis. `/lembur/approval`).
   static WidgetBuilder? resolveRoute(String menuLink) {
-    // Normalize menu link
     final normalizedLink = menuLink.toLowerCase().replaceAll(RegExp(r'/$'), '');
-    
-    // Skip dashboard
     if (normalizedLink == '/dashboard' || normalizedLink.isEmpty) {
       return null;
     }
 
-    // Parse route untuk mendapatkan master name
-    // Format: /{master} atau /{master}/approval atau /{master}/approve
     final parts = normalizedLink.split('/').where((p) => p.isNotEmpty).toList();
     
     if (parts.isEmpty) {
@@ -36,55 +20,33 @@ class DynamicRouteResolver {
     final masterName = parts[0];
     final action = parts.length > 1 ? parts[1] : null;
 
-    // Jika action adalah 'approval' atau 'approve', atau tidak ada action (default approval)
     if (action == null || action == 'approval' || action == 'approve') {
       return _buildApprovalRoute(masterName);
     }
-
-    // Untuk action lain (list, create, dll), return null karena tidak digunakan lagi
-    // Server hanya akan mengirim menuLink untuk approval
     return null;
   }
 
-  /// Build approval route untuk master tertentu
+  /// Membuat `WidgetBuilder` untuk halaman approval generik suatu master.
   static WidgetBuilder _buildApprovalRoute(String masterName) {
     return (context) => GenericApprovalPage(
       apiUrl: ApiConfig.approvalEndpoint(masterName),
       masterName: masterName,
-      emptyMessage: _getEmptyMessage(masterName),
-      emptyIcon: _getEmptyIcon(masterName),
+      emptyMessage: _getEmptyMessage(),
+      emptyIcon: _getEmptyIcon(),
     );
   }
 
-  /// Get empty message berdasarkan master name
-  static String _getEmptyMessage(String masterName) {
-    switch (masterName.toLowerCase()) {
-      case 'lembur':
-        return 'Tidak ada request lembur pending';
-      case 'cuti':
-        return 'Tidak ada request cuti pending';
-      case 'po':
-        return 'Tidak ada request PO pending';
-      default:
+  /// Mengembalikan pesan kosong default berdasarkan jenis master.
+  static String _getEmptyMessage() {
         return 'Tidak ada request pending';
-    }
   }
 
-  /// Get empty icon berdasarkan master name
-  static IconData _getEmptyIcon(String masterName) {
-    switch (masterName.toLowerCase()) {
-      case 'lembur':
-        return Icons.access_time;
-      case 'cuti':
+  /// Mengembalikan ikon default berdasarkan jenis master.
+  static IconData _getEmptyIcon() {
         return Icons.rule;
-      case 'po':
-        return Icons.shopping_cart;
-      default:
-        return Icons.rule;
-    }
   }
 
-  /// Check if route exists (untuk validasi)
+  /// Mengecek apakah `menuLink` dapat di-resolve menjadi halaman valid.
   static bool hasRoute(String menuLink) {
     return resolveRoute(menuLink) != null;
   }
