@@ -1,6 +1,9 @@
 class ApiConfig {
   static const String baseUrl = "https://4e46560e2f35.ngrok-free.app/api";
 
+  /// Versi aplikasi client untuk tracking di activity logs
+  static const String clientVersion = "1.0.0";
+
   // Authentication Endpoints
   static const String login = "$baseUrl/login";
   static const String logout = "$baseUrl/logout";

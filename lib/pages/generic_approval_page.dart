@@ -38,7 +38,7 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
   bool _isSubmitting = false;
   PaginationMetadata? _pagination;
   int _currentPage = 1;
-  int _perPage = 5;
+  int _perPage = 15;
   bool _hasMorePages = true;
 
   /// Inisialisasi controller dan langsung memuat data awal.

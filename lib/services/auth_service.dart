@@ -17,6 +17,7 @@ class AuthService {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'X-Client-Version': ApiConfig.clientVersion,
         },
         body: jsonEncode({
           'email': email,
@@ -86,6 +87,7 @@ class AuthService {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'X-Client-Version': ApiConfig.clientVersion,
           'Authorization': 'Bearer $token',
         },
       );
@@ -111,6 +113,7 @@ class AuthService {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'X-Client-Version': ApiConfig.clientVersion,
           'Authorization': 'Bearer $token',
         },
       );

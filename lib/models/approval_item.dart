@@ -5,7 +5,6 @@ class ApprovalItem {
   final String subtitle;
   final String? date;
   final String? status;
-  final Map<String, dynamic>? rawData;
 
   ApprovalItem({
     required this.id,
@@ -13,7 +12,6 @@ class ApprovalItem {
     required this.subtitle,
     this.date,
     this.status,
-    this.rawData,
   });
 
   /// Membuat `ApprovalItem` dari JSON mentah menggunakan konfigurasi mapping dinamis.
@@ -33,7 +31,6 @@ class ApprovalItem {
       subtitle: getMappedValue('subtitle') ?? '',
       date: getMappedValue('date'),
       status: getMappedValue('status'),
-      rawData: json,
     );
   }
 
@@ -45,7 +42,6 @@ class ApprovalItem {
       'subtitle': subtitle,
       'date': date,
       'status': status,
-      'rawData': rawData,
     };
   }
 }

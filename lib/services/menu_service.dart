@@ -11,6 +11,7 @@ class MenuService {
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'X-Client-Version': ApiConfig.clientVersion,
       if (token != null) 'Authorization': 'Bearer $token',
     };
   }
@@ -20,7 +21,11 @@ class MenuService {
     try {
       final url = Uri.parse(ApiConfig.menus);
       final headers = await _getHeaders();
-      final response = await http.get(url, headers: headers);
+      final response = await http.get(url, headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Client-Version': ApiConfig.clientVersion,
+      });
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);

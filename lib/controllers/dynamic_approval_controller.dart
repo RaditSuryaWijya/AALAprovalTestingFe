@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../models/approval_item.dart';
 import '../models/pagination_metadata.dart';
 import '../controllers/approval_controller.dart';
+import '../config/api_config.dart';
 import '../utils/storage_helper.dart';
 
 /// Controller approval generik yang mengambil konfigurasi dan data dari API
@@ -29,7 +30,7 @@ class DynamicApprovalController implements ApprovalController {
     return '${millis.toRadixString(16)}-${random.toRadixString(16)}';
   }
 
-  /// Menyusun header HTTP standar (auth, tracing, device ID).
+  /// Menyusun header HTTP standar (auth, tracing, device ID, client version).
   Future<Map<String, String>> _getHeaders() async {
     final token = await StorageHelper.getToken();
     final deviceId = await StorageHelper.getOrCreateDeviceId();
@@ -38,6 +39,7 @@ class DynamicApprovalController implements ApprovalController {
       'Accept': 'application/json',
       'X-Correlation-Id': _generateCorrelationId(),
       'X-Device-Id': deviceId,
+      'X-Client-Version': ApiConfig.clientVersion,
       if (token != null) 'Authorization': 'Bearer $token',
     };
   }
@@ -139,7 +141,6 @@ class DynamicApprovalController implements ApprovalController {
                 subtitle: item['subtitle']?.toString() ?? '',
                 date: item['date']?.toString(),
                 status: item['status']?.toString(),
-                rawData: item,
               ));
             }
           }
@@ -150,7 +151,6 @@ class DynamicApprovalController implements ApprovalController {
             subtitle: data['subtitle']?.toString() ?? '',
             date: data['date']?.toString(),
             status: data['status']?.toString(),
-            rawData: data,
           ));
         }
       }
