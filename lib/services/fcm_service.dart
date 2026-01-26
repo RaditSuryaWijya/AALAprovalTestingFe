@@ -1,7 +1,11 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'dart:convert';
 import '../services/fcm_token_service.dart';
 import '../utils/notification_helper.dart';
+import '../utils/storage_helper.dart';
+import 'notification_router.dart';
 
 /// Service untuk mengelola FCM (Firebase Cloud Messaging)
 class FCMService {
@@ -13,8 +17,11 @@ class FCMService {
   /// - Meminta izin notifikasi
   /// - Mengambil dan menyimpan token ke Laravel
   /// - Setup listener untuk pesan foreground
-  static Future<void> initialize() async {
+  static Future<void> initialize(GlobalKey<NavigatorState> navigatorKey) async {
     try {
+      // Set navigatorKey untuk routing dari notifikasi
+      NotificationRouter.navigatorKey = navigatorKey;
+
       // 1. Inisialisasi Local Notifications
       await NotificationHelper.initialize(_localNotifications);
 
@@ -45,6 +52,12 @@ class FCMService {
       // 4. Setup listener untuk pesan foreground
       _setupForegroundMessageListener();
 
+      // 4b. Listener saat user tap notifikasi (FCM) dan app terbuka dari background
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        print('Notifikasi di-tap (FCM): ${message.messageId}');
+        NotificationRouter.handleMessageData(message.data);
+      });
+
       // 5. Handle token refresh
       _messaging.onTokenRefresh.listen((newToken) {
         print('FCM Token refreshed: $newToken');
@@ -58,19 +71,43 @@ class FCMService {
     }
   }
 
-  /// Mengambil FCM Token dan mengirim ke Laravel
+  /// Mengambil FCM Token dan simpan di local storage (belum kirim ke Laravel)
+  /// Token akan dikirim ke Laravel setelah user login berhasil
   static Future<void> _getAndSaveToken() async {
     try {
       String? token = await _messaging.getToken();
       if (token != null) {
         print('FCM Token: $token');
-        // Kirim token ke Laravel untuk disimpan di database
-        await FCMTokenService.saveTokenToLaravel(token);
+        // Simpan token di local storage saja (belum kirim ke Laravel)
+        // Token akan dikirim ke Laravel setelah user login berhasil
+        await StorageHelper.saveFcmToken(token);
       } else {
         print('FCM Token tidak tersedia');
       }
     } catch (e) {
       print('Error getting FCM token: $e');
+    }
+  }
+
+  /// Kirim FCM token ke Laravel setelah user login berhasil
+  /// Method ini dipanggil dari AuthService setelah login sukses
+  static Future<void> sendTokenAfterLogin() async {
+    try {
+      // Ambil token dari local storage atau langsung dari Firebase
+      String? token = await StorageHelper.getFcmToken();
+      if (token == null) {
+        // Jika belum ada di local, ambil dari Firebase
+        token = await _messaging.getToken();
+      }
+      
+      if (token != null) {
+        print('Mengirim FCM token ke Laravel setelah login: $token');
+        await FCMTokenService.saveTokenToLaravel(token);
+      } else {
+        print('FCM Token tidak tersedia untuk dikirim ke Laravel');
+      }
+    } catch (e) {
+      print('Error sendTokenAfterLogin: $e');
     }
   }
 
@@ -89,7 +126,7 @@ class FCMService {
           id: message.hashCode,
           title: message.notification!.title ?? 'Notifikasi',
           body: message.notification!.body ?? '',
-          payload: message.data.toString(),
+          payload: jsonEncode(message.data),
         );
       }
     });
@@ -103,7 +140,8 @@ class FCMService {
       print('Title: ${initialMessage.notification?.title}');
       print('Body: ${initialMessage.notification?.body}');
       print('Data: ${initialMessage.data}');
-      // Di sini bisa handle navigasi atau action berdasarkan data notifikasi
+      // Handle navigasi berdasarkan data notifikasi (type/id)
+      NotificationRouter.handleMessageData(initialMessage.data);
     }
   }
 

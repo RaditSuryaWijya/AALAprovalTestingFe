@@ -4,6 +4,7 @@ import '../config/api_config.dart';
 import '../models/auth_user_model.dart';
 import '../utils/storage_helper.dart';
 import 'fcm_token_service.dart';
+import 'fcm_service.dart';
 
 class AuthService {
   // Login
@@ -45,6 +46,10 @@ class AuthService {
               await StorageHelper.saveUserData(jsonEncode(userData));
             }
             
+            // Kirim FCM token ke Laravel setelah login berhasil
+            // (Token sudah diambil saat initialize, sekarang baru dikirim karena sudah ada auth token)
+            await FCMService.sendTokenAfterLogin();
+            
             return {
               'success': true,
               'message': responseData['message'] ?? 'Login berhasil',
@@ -82,6 +87,12 @@ class AuthService {
         return true;
       }
 
+      // IMPORTANT:
+      // Hapus FCM token SEBELUM memanggil endpoint logout.
+      // Banyak backend akan me-revoke token saat /logout, sehingga request berikutnya (delete fcm-token)
+      // akan menjadi 401 Unauthorized.
+      await FCMTokenService.deleteTokenFromLaravel();
+
       final url = Uri.parse(ApiConfig.logout);
       final response = await http.post(
         url,
@@ -92,15 +103,12 @@ class AuthService {
           'Authorization': 'Bearer $token',
         },
       );
-
-      // Hapus FCM token dari Laravel sebelum logout
-      await FCMTokenService.deleteTokenFromLaravel();
       
       await StorageHelper.clearAuth();
       
       return response.statusCode == 200;
     } catch (e) {
-      // Hapus FCM token dari Laravel sebelum logout
+      // Best effort cleanup
       await FCMTokenService.deleteTokenFromLaravel();
       await StorageHelper.clearAuth();
       return false;

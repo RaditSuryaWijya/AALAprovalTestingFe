@@ -1,4 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import '../services/notification_router.dart';
 
 /// Helper untuk menampilkan notifikasi lokal saat aplikasi sedang dibuka (foreground)
 class NotificationHelper {
@@ -95,7 +96,7 @@ class NotificationHelper {
   /// Handler ketika notifikasi di-tap
   static void _onNotificationTapped(NotificationResponse response) {
     print('Notifikasi di-tap: ${response.payload}');
-    // Di sini bisa handle navigasi berdasarkan payload
-    // Contoh: jika payload berisi route, bisa navigate ke halaman tersebut
+    // Arahkan berdasarkan payload JSON (type/id)
+    NotificationRouter.handlePayload(response.payload);
   }
 }

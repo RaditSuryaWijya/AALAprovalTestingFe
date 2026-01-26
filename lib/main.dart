@@ -8,6 +8,8 @@ import 'models/auth_user_model.dart';
 import 'pages/login_page.dart';
 import 'pages/dashboard_page.dart';
 
+final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
+
 // Top-level function untuk background message handler
 // Harus berada di luar class (top-level function)
 @pragma('vm:entry-point')
@@ -29,7 +31,7 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   
   // Inisialisasi FCM Service
-  await FCMService.initialize();
+  await FCMService.initialize(appNavigatorKey);
   
   runApp(const MyApp());
 }
@@ -41,6 +43,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Approval System',
+      navigatorKey: appNavigatorKey,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,

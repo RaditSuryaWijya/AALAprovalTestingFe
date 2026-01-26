@@ -51,9 +51,11 @@ class FCMTokenService {
   /// Helper untuk mendapatkan headers dengan token
   static Future<Map<String, String>> _getHeaders() async {
     final token = await StorageHelper.getToken();
+    final deviceId = await StorageHelper.getOrCreateDeviceId();
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'X-Device-Id': deviceId,
       'X-Client-Version': ApiConfig.clientVersion,
       if (token != null) 'Authorization': 'Bearer $token',
     };
