@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "635355780774",
+    "project_id": "aalaproval",
+    "storage_bucket": "aalaproval.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:635355780774:android:295d0b6542ace78a854667",
+        "android_client_info": {
+          "package_name": "com.example.testingmagangaal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBbUnU5K6evtk4ybRZpQQ8alcYmbRWZb0o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

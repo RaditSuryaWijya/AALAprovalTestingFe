@@ -1,11 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'routes/app_routes.dart';
 import 'services/auth_service.dart';
+import 'services/fcm_service.dart';
 import 'models/auth_user_model.dart';
 import 'pages/login_page.dart';
 import 'pages/dashboard_page.dart';
 
-void main() {
+// Top-level function untuk background message handler
+// Harus berada di luar class (top-level function)
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print("Menangani pesan background: ${message.messageId}");
+  print("Title: ${message.notification?.title}");
+  print("Body: ${message.notification?.body}");
+  print("Data: ${message.data}");
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Inisialisasi Firebase
+  await Firebase.initializeApp();
+  
+  // Set background message handler
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  
+  // Inisialisasi FCM Service
+  await FCMService.initialize();
+  
   runApp(const MyApp());
 }
 

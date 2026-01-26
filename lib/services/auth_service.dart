@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../config/api_config.dart';
 import '../models/auth_user_model.dart';
 import '../utils/storage_helper.dart';
+import 'fcm_token_service.dart';
 
 class AuthService {
   // Login
@@ -92,10 +93,15 @@ class AuthService {
         },
       );
 
+      // Hapus FCM token dari Laravel sebelum logout
+      await FCMTokenService.deleteTokenFromLaravel();
+      
       await StorageHelper.clearAuth();
       
       return response.statusCode == 200;
     } catch (e) {
+      // Hapus FCM token dari Laravel sebelum logout
+      await FCMTokenService.deleteTokenFromLaravel();
       await StorageHelper.clearAuth();
       return false;
     }

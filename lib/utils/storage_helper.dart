@@ -4,6 +4,7 @@ class StorageHelper {
   static const String _tokenKey = 'auth_token';
   static const String _userKey = 'user_data';
   static const String _deviceIdKey = 'device_id';
+  static const String _fcmTokenKey = 'fcm_token';
 
   // Token Management
   static Future<void> saveToken(String token) async {
@@ -60,6 +61,22 @@ class StorageHelper {
     final millis = DateTime.now().millisecondsSinceEpoch;
     final random = DateTime.now().microsecondsSinceEpoch.remainder(1 << 32);
     return '${millis.toRadixString(16)}-${random.toRadixString(16)}';
+  }
+
+  // FCM Token Management
+  static Future<void> saveFcmToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_fcmTokenKey, token);
+  }
+
+  static Future<String?> getFcmToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_fcmTokenKey);
+  }
+
+  static Future<void> removeFcmToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_fcmTokenKey);
   }
 }
 
