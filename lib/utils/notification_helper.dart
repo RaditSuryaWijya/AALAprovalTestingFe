@@ -10,7 +10,7 @@ class NotificationHelper {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // iOS initialization settings (opsional, jika nanti support iOS)
+    // iOS initialization settings
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -66,7 +66,7 @@ class NotificationHelper {
       'approval_notifications', // channel id (harus sama dengan channel)
       'Approval Notifications', // channel name
       channelDescription: 'Notifikasi untuk approval request',
-      importance: Importance.high,
+      importance: Importance.max,
       priority: Priority.high,
       showWhen: true,
       enableVibration: true,
