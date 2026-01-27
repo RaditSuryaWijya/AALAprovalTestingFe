@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'dart:convert';
 import 'routes/app_routes.dart';
 import 'services/auth_service.dart';
 import 'services/fcm_service.dart';
@@ -19,6 +21,85 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("Title: ${message.notification?.title}");
   print("Body: ${message.notification?.body}");
   print("Data: ${message.data}");
+  
+  // Tampilkan notifikasi lokal saat app di background/terminated
+  // Ini akan membuat heads-up notification muncul di atas layar
+  if (message.notification != null) {
+    // Import diperlukan untuk menggunakan NotificationHelper
+    // Tapi karena ini top-level function, kita perlu inisialisasi ulang
+    final FlutterLocalNotificationsPlugin localNotifications = 
+        FlutterLocalNotificationsPlugin();
+    
+    // Inisialisasi dengan channel yang sama
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const DarwinInitializationSettings initializationSettingsIOS =
+        DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+    const InitializationSettings initializationSettings =
+        InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+    );
+    
+    await localNotifications.initialize(initializationSettings);
+    
+    // Buat notification channel dengan importance MAX untuk heads-up
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'approval_notifications',
+      'Approval Notifications',
+      description: 'Notifikasi untuk approval request',
+      importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+      showBadge: true,
+    );
+    
+    await localNotifications
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+    
+    // Tampilkan notifikasi dengan priority MAX untuk heads-up
+    final AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      'approval_notifications',
+      'Approval Notifications',
+      channelDescription: 'Notifikasi untuk approval request',
+      importance: Importance.max,
+      priority: Priority.max,
+      showWhen: true,
+      enableVibration: true,
+      playSound: true,
+      fullScreenIntent: true,
+      category: AndroidNotificationCategory.message,
+      styleInformation: BigTextStyleInformation(
+        message.notification?.body ?? '',
+      ),
+    );
+    
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+    
+    final NotificationDetails notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+    
+    await localNotifications.show(
+      message.hashCode,
+      message.notification?.title ?? 'Notifikasi',
+      message.notification?.body ?? '',
+      notificationDetails,
+      payload: message.data.isNotEmpty ? jsonEncode(message.data) : null,
+    );
+  }
 }
 
 void main() async {

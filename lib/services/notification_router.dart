@@ -1,13 +1,14 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../config/api_config.dart';
+import '../pages/pdf_viewer_page.dart';
 
 /// Router untuk mengarahkan user berdasarkan payload notifikasi.
 ///
 /// Backend mengirim data seperti:
 /// { "type": "lembur_new|po_new|...", "id": 123 }
 ///
-/// Karena app kita server-driven, kita navigasi pakai route string yang bisa
-/// di-resolve oleh `DynamicRouteResolver` (mis. `/lembur/approval`).
+/// Ketika notifikasi diklik, akan navigasi langsung ke halaman detail (PDF) dari approval tersebut.
 class NotificationRouter {
   static GlobalKey<NavigatorState>? navigatorKey;
 
@@ -18,12 +19,50 @@ class NotificationRouter {
     final master = _masterFromType(type);
     if (master == null) return;
 
+    // Ambil ID dari data notifikasi
+    final idStr = data['id']?.toString();
+    if (idStr == null || idStr.isEmpty) {
+      // Jika tidak ada ID, arahkan ke halaman approval list
+      _navigateToApprovalList(master);
+      return;
+    }
+
+    final id = int.tryParse(idStr);
+    if (id == null || id <= 0) {
+      // ID tidak valid, arahkan ke halaman approval list
+      _navigateToApprovalList(master);
+      return;
+    }
+
+    // Navigasi langsung ke halaman detail (PDF) dari approval tersebut
+    _navigateToDetail(master, id);
+  }
+
+  /// Navigasi ke halaman detail (PDF) dari approval
+  static void _navigateToDetail(String master, int id) {
+    final nav = navigatorKey?.currentState;
+    if (nav == null) return;
+
+    // Build PDF URL untuk detail approval
+    final pdfUrl = ApiConfig.exportMasterById(master, id);
+    
+    // Navigasi ke PDF viewer page
+    nav.push(
+      MaterialPageRoute(
+        builder: (context) => PdfViewerPage(
+          url: pdfUrl,
+          title: 'Detail ${master.toUpperCase()} #$id',
+        ),
+      ),
+    );
+  }
+
+  /// Navigasi ke halaman approval list jika ID tidak tersedia
+  static void _navigateToApprovalList(String master) {
     final route = '/$master/approval';
     final nav = navigatorKey?.currentState;
     if (nav == null) return;
 
-    // Untuk sekarang kita arahkan ke halaman approval master terkait.
-    // Kalau nanti ada halaman detail, bisa extend: '/$master/detail/$id' dsb.
     nav.pushNamed(route);
   }
 
