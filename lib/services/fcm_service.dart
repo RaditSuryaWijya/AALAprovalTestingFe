@@ -70,7 +70,8 @@ class FCMService {
       });
 
       // 6. Handle notifikasi saat app dibuka dari terminated state
-      _handleInitialMessage();
+      // NOTE: Tidak dipanggil di sini, akan dipanggil dari AuthGate setelah auth check
+      // _handleInitialMessage();
     } catch (e) {
       print('Error initializing FCM: $e');
     }
@@ -178,15 +179,28 @@ class FCMService {
   }
 
   /// Handle notifikasi saat aplikasi dibuka dari terminated state
-  static Future<void> _handleInitialMessage() async {
-    RemoteMessage? initialMessage = await _messaging.getInitialMessage();
-    if (initialMessage != null) {
-      print('App dibuka dari terminated state via notifikasi');
-      print('Title: ${initialMessage.notification?.title}');
-      print('Body: ${initialMessage.notification?.body}');
-      print('Data: ${initialMessage.data}');
-      // Handle navigasi berdasarkan data notifikasi (type/id)
-      NotificationRouter.handleMessageData(initialMessage.data);
+  /// Method ini dipanggil dari AuthGate setelah auth check selesai
+  /// Returns true jika ada initial message yang di-handle
+  static Future<bool> handleInitialMessage() async {
+    try {
+      RemoteMessage? initialMessage = await _messaging.getInitialMessage();
+      if (initialMessage != null) {
+        print('App dibuka dari terminated state via notifikasi');
+        print('Title: ${initialMessage.notification?.title}');
+        print('Body: ${initialMessage.notification?.body}');
+        print('Data: ${initialMessage.data}');
+        
+        // Delay sedikit untuk memastikan navigator sudah ready
+        await Future.delayed(const Duration(milliseconds: 300));
+        
+        // Handle navigasi berdasarkan data notifikasi (type/id)
+        NotificationRouter.handleMessageData(initialMessage.data);
+        return true; // Return true jika ada initial message
+      }
+      return false; // Return false jika tidak ada initial message
+    } catch (e) {
+      print('Error handling initial message: $e');
+      return false;
     }
   }
 

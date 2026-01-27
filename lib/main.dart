@@ -177,10 +177,10 @@ class MyApp extends StatelessWidget {
               ),
             ),
           ),
-        );
+    );
       },
     );
-  }
+}
 }
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
@@ -191,6 +191,7 @@ class AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<AuthGate> {
   bool _checking = true;
+  bool _isAuthenticated = false;
   AuthUserModel? _user;
 
   @override
@@ -205,22 +206,18 @@ class _AuthGateState extends State<AuthGate> {
 
     if (!mounted) return;
 
-    if (isAuthenticated && user != null) {
-      // Sudah login -> langsung ke dashboard
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => DashboardPage(user: user)),
-      );
-    } else {
-      // Belum login -> ke halaman login
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-      );
-    }
+    // Update state dulu supaya UI tidak “kedip” ke LoginPage saat token valid
+    setState(() {
+      _checking = false;
+      _isAuthenticated = isAuthenticated && user != null;
+      _user = user;
+    });
 
-    if (mounted) {
-      setState(() {
-        _checking = false;
-        _user = user;
+    // Jika sudah login, handle initial message (terminated -> tap notifikasi)
+    // Kita trigger setelah frame pertama agar navigator/context sudah siap.
+    if (_isAuthenticated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await FCMService.handleInitialMessage();
       });
     }
   }
@@ -239,8 +236,12 @@ class _AuthGateState extends State<AuthGate> {
       );
     }
 
-    // Secara teori tidak pernah sampai sini karena sudah di-redirect,
-    // tapi untuk jaga-jaga tampilkan LoginPage.
+    if (_isAuthenticated && _user != null) {
+      // Render langsung dashboard agar tidak ada flicker LoginPage.
+      // Jika dibuka dari notifikasi, halaman detail akan di-push di atas dashboard.
+      return DashboardPage(user: _user!);
+    }
+
     return const LoginPage();
   }
 }

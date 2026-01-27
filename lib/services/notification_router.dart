@@ -45,13 +45,16 @@ class NotificationRouter {
 
     // Build PDF URL untuk detail approval
     final pdfUrl = ApiConfig.exportMasterById(master, id);
-    
-    // Navigasi ke PDF viewer page
+
+    // Selalu gunakan push agar ada halaman sebelumnya di stack (Dashboard),
+    // sehingga AppBar otomatis menampilkan tombol back.
     nav.push(
       MaterialPageRoute(
         builder: (context) => PdfViewerPage(
           url: pdfUrl,
           title: 'Detail ${master.toUpperCase()} #$id',
+          masterName: master,
+          id: id,
         ),
       ),
     );

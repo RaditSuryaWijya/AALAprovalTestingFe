@@ -264,6 +264,8 @@ class _GenericApprovalPageState extends State<GenericApprovalPage> {
         builder: (context) => PdfViewerPage(
           url: pdfUrl,
           title: 'Detail ${widget.masterName.toUpperCase()} #${item.id}',
+          masterName: widget.masterName,
+          id: item.id,
         ),
       ),
     );
