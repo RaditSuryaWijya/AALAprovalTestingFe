@@ -7,17 +7,27 @@ import '../utils/storage_helper.dart';
 class FCMTokenService {
   /// Mengirim FCM token ke Laravel untuk disimpan di database
   /// Endpoint: POST /api/fcm-token
-  /// Body: { "fcm_token": "token_string" }
-  static Future<bool> saveTokenToLaravel(String token) async {
+  /// Body: { "fcm_token": "token_string", "device_name": "device_name", "device_id": "device_id" }
+  static Future<bool> saveTokenToLaravel(
+    String token, {
+    String? deviceName,
+    String? deviceId,
+  }) async {
     try {
       final url = Uri.parse(ApiConfig.saveFcmToken);
       final headers = await _getHeaders();
+
+      // Ambil device info jika tidak disediakan
+      final finalDeviceName = deviceName ?? await StorageHelper.getDeviceName() ?? 'Unknown Device';
+      final finalDeviceId = deviceId ?? await StorageHelper.getOrCreateDeviceId();
 
       final response = await http.post(
         url,
         headers: headers,
         body: jsonEncode({
           'fcm_token': token,
+          'device_name': finalDeviceName,
+          'device_id': finalDeviceId,
         }),
       );
 
@@ -62,9 +72,22 @@ class FCMTokenService {
   }
 
   /// Hapus FCM token dari Laravel (saat logout)
+  /// Menggunakan device_id di query parameter untuk menghapus token spesifik per device
   static Future<bool> deleteTokenFromLaravel() async {
     try {
-      final url = Uri.parse(ApiConfig.saveFcmToken);
+      // Ambil device_id dan token yang tersimpan
+      final deviceId = await StorageHelper.getOrCreateDeviceId();
+      final fcmToken = await StorageHelper.getFcmToken();
+      
+      // Build query parameter: prioritas device_id, fallback ke token
+      String query = '';
+      if (deviceId.isNotEmpty) {
+        query = '?device_id=$deviceId';
+      } else if (fcmToken != null && fcmToken.isNotEmpty) {
+        query = '?token=$fcmToken';
+      }
+      
+      final url = Uri.parse('${ApiConfig.saveFcmToken}$query');
       final headers = await _getHeaders();
 
       final response = await http.delete(

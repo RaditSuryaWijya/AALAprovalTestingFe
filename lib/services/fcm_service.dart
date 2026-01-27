@@ -1,6 +1,8 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'dart:io';
 import 'dart:convert';
 import '../services/fcm_token_service.dart';
 import '../utils/notification_helper.dart';
@@ -46,8 +48,8 @@ class FCMService {
         return;
       }
 
-      // 3. Mengambil FCM Token dan kirim ke Laravel
-      await _getAndSaveToken();
+      // 3. Mengambil device info dan FCM Token
+      await _getDeviceInfoAndSaveToken();
 
       // 4. Setup listener untuk pesan foreground
       _setupForegroundMessageListener();
@@ -59,9 +61,12 @@ class FCMService {
       });
 
       // 5. Handle token refresh
-      _messaging.onTokenRefresh.listen((newToken) {
+      _messaging.onTokenRefresh.listen((newToken) async {
         print('FCM Token refreshed: $newToken');
-        FCMTokenService.saveTokenToLaravel(newToken);
+        // Ambil device info yang sudah tersimpan atau ambil ulang
+        final deviceName = await StorageHelper.getDeviceName() ?? await _getDeviceName();
+        final deviceId = await StorageHelper.getOrCreateDeviceId();
+        await FCMTokenService.saveTokenToLaravel(newToken, deviceName: deviceName, deviceId: deviceId);
       });
 
       // 6. Handle notifikasi saat app dibuka dari terminated state
@@ -71,13 +76,23 @@ class FCMService {
     }
   }
 
-  /// Mengambil FCM Token dan simpan di local storage (belum kirim ke Laravel)
+  /// Mengambil device info dan FCM Token, simpan di local storage
   /// Token akan dikirim ke Laravel setelah user login berhasil
-  static Future<void> _getAndSaveToken() async {
+  static Future<void> _getDeviceInfoAndSaveToken() async {
     try {
+      // 1. Ambil device info
+      final deviceName = await _getDeviceName();
+      final deviceId = await StorageHelper.getOrCreateDeviceId();
+      
+      // Simpan device name
+      await StorageHelper.saveDeviceName(deviceName);
+      
+      // 2. Ambil FCM Token
       String? token = await _messaging.getToken();
       if (token != null) {
         print('FCM Token: $token');
+        print('Device Name: $deviceName');
+        print('Device ID: $deviceId');
         // Simpan token di local storage saja (belum kirim ke Laravel)
         // Token akan dikirim ke Laravel setelah user login berhasil
         await StorageHelper.saveFcmToken(token);
@@ -85,7 +100,27 @@ class FCMService {
         print('FCM Token tidak tersedia');
       }
     } catch (e) {
-      print('Error getting FCM token: $e');
+      print('Error getting device info and FCM token: $e');
+    }
+  }
+
+  /// Mengambil device name berdasarkan platform
+  static Future<String> _getDeviceName() async {
+    try {
+      DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+      
+      if (Platform.isAndroid) {
+        AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+        return '${androidInfo.manufacturer} ${androidInfo.model}';
+      } else if (Platform.isIOS) {
+        IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+        return '${iosInfo.name} (${iosInfo.model})';
+      } else {
+        return 'Unknown Device';
+      }
+    } catch (e) {
+      print('Error getting device name: $e');
+      return 'Unknown Device';
     }
   }
 
@@ -100,9 +135,19 @@ class FCMService {
         token = await _messaging.getToken();
       }
       
+      // Ambil device info
+      String deviceName = await StorageHelper.getDeviceName() ?? await _getDeviceName();
+      String deviceId = await StorageHelper.getOrCreateDeviceId();
+      
       if (token != null) {
         print('Mengirim FCM token ke Laravel setelah login: $token');
-        await FCMTokenService.saveTokenToLaravel(token);
+        print('Device Name: $deviceName');
+        print('Device ID: $deviceId');
+        await FCMTokenService.saveTokenToLaravel(
+          token,
+          deviceName: deviceName,
+          deviceId: deviceId,
+        );
       } else {
         print('FCM Token tidak tersedia untuk dikirim ke Laravel');
       }

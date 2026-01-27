@@ -4,6 +4,7 @@ class StorageHelper {
   static const String _tokenKey = 'auth_token';
   static const String _userKey = 'user_data';
   static const String _deviceIdKey = 'device_id';
+  static const String _deviceNameKey = 'device_name';
   static const String _fcmTokenKey = 'fcm_token';
 
   // Token Management
@@ -77,6 +78,22 @@ class StorageHelper {
   static Future<void> removeFcmToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_fcmTokenKey);
+  }
+
+  // Device Name Management
+  static Future<void> saveDeviceName(String deviceName) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_deviceNameKey, deviceName);
+  }
+
+  static Future<String?> getDeviceName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_deviceNameKey);
+  }
+
+  static Future<void> removeDeviceName() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_deviceNameKey);
   }
 }
 

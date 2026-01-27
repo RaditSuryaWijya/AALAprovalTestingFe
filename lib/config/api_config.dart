@@ -1,5 +1,5 @@
 class ApiConfig {
-  static const String baseUrl = "https://9b3444029e40.ngrok-free.app/api";
+  static const String baseUrl = "https://c0e9630deffd.ngrok-free.app/api";
 
   /// Versi aplikasi client untuk tracking di activity logs
   static const String clientVersion = "1.0.0";
